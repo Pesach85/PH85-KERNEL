@@ -568,7 +568,7 @@ static struct mpu3050_platform_data mpu3050_data = {
 		.orientation = {
 			0, 1, 0,
 			1, 0, 0,
-			0, 0, -1
+			0, 0, 1
 		},
 #else
 		.orientation = {
