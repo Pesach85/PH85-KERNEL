@@ -400,7 +400,6 @@ void omap4_enter_sleep(unsigned int cpu, unsigned int power_state, bool suspend)
 
 	if (suspend)
 		syscontrol_lpddr_clk_io_errata(false);
-
 	omap4_enter_lowpower(cpu, power_state);
 
 	if (suspend)

@@ -290,9 +290,9 @@ static int cosmo_batt_table[] = {
 
 static struct twl4030_bci_platform_data cosmo_bci_data = {
 	.monitoring_interval = 10,
-	.max_charger_currentmA = 1500,
+	.max_charger_currentmA = 1530,
 	.max_charger_voltagemV = 4560,
-	.max_bat_voltagemV = 4200,
+	.max_bat_voltagemV = 4205,
 	.low_bat_voltagemV = 3300,
 	.battery_tmp_tbl = cosmo_batt_table,
 	.tblsize = ARRAY_SIZE(cosmo_batt_table),
