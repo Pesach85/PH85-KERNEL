@@ -400,6 +400,7 @@ void omap4_enter_sleep(unsigned int cpu, unsigned int power_state, bool suspend)
 
 	if (suspend)
 		syscontrol_lpddr_clk_io_errata(false);
+
 	omap4_enter_lowpower(cpu, power_state);
 
 	if (suspend)
@@ -1742,6 +1743,42 @@ static int __init omap4_pm_init(void)
 	}
 	omap_vc_set_auto_trans(core_voltdm,
 			       OMAP_VC_CHANNEL_AUTO_TRANSITION_DISABLE);
+
+	/*
+	 * XXX: voltage config is not still completely valid for
+	 * OMAP4, and this causes crashes on some platform during
+	 * device off because voltage transitions for device off
+	 * are enabled on reset. Thus, we have to disable the I2C
+	 * channel completely in the VOLTCTRL register to avoid
+	 * trouble. Remove this once voltconfigs are valid.
+	 */
+	mpu_voltdm = voltdm_lookup("mpu");
+	if (!mpu_voltdm) {
+		pr_err("Failed to get MPU voltdm\n");
+		goto err2;
+	}
+	mpu_voltdm->write(OMAP4430_VDD_MPU_I2C_DISABLE_MASK |
+			  OMAP4430_VDD_CORE_I2C_DISABLE_MASK |
+			  OMAP4430_VDD_IVA_I2C_DISABLE_MASK,
+			  OMAP4_PRM_VOLTCTRL_OFFSET);
+
+	/*
+	 * XXX: voltage config is not still completely valid for
+	 * OMAP4, and this causes crashes on some platform during
+	 * device off because voltage transitions for device off
+	 * are enabled on reset. Thus, we have to disable the I2C
+	 * channel completely in the VOLTCTRL register to avoid
+	 * trouble. Remove this once voltconfigs are valid.
+	 */
+	mpu_voltdm = voltdm_lookup("mpu");
+	if (!mpu_voltdm) {
+		pr_err("Failed to get MPU voltdm\n");
+		goto err2;
+	}
+	mpu_voltdm->write(OMAP4430_VDD_MPU_I2C_DISABLE_MASK |
+			  OMAP4430_VDD_CORE_I2C_DISABLE_MASK |
+			  OMAP4430_VDD_IVA_I2C_DISABLE_MASK,
+			  OMAP4_PRM_VOLTCTRL_OFFSET);
 
 	ret = omap4_mpuss_init();
 	if (ret) {

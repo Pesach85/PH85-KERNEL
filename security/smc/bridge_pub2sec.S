@@ -78,11 +78,12 @@ return_from_irq:
 	b	label_smc
 
 label_smc:
+        .arch_extension sec
 	INVALIDATE_BTB
 	dsb
 	dmb
 
-#	smc	#0
+	smc	#0
 	b	service_end
 	nop
 

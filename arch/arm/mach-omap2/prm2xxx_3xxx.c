@@ -72,6 +72,14 @@ u32 omap2_prm_clear_mod_reg_bits(u32 bits, s16 module, s16 idx)
 	return omap2_prm_rmw_mod_reg_bits(bits, 0x0, module, idx);
 }
 
+void omap2_prm_enable_prcm_module_wakeup(u32 bits, s16 module, s16 idx,
+			bool set_wake)
+{
+	if (set_wake)
+		omap2_prm_set_mod_reg_bits(bits, module, idx);
+	else
+		omap2_prm_clear_mod_reg_bits(bits, module, idx);
+}
 
 /**
  * omap2_prm_is_hardreset_asserted - read the HW reset line state of

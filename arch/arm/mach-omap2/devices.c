@@ -23,6 +23,7 @@
 #include <asm/mach-types.h>
 #include <asm/mach/map.h>
 #include <asm/pmu.h>
+#include <asm/cti.h>
 
 #include <plat/tc.h>
 #include <plat/board.h>

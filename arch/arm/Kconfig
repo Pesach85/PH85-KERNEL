@@ -1239,6 +1239,19 @@ config ARM_ERRATA_754327
 	  This workaround defines cpu_relax() as smp_mb(), preventing correctly
 	  written polling loops from denying visibility of updates to memory.
 
+config PL310_ERRATA_588369
+	bool "Clean & Invalidate maintenance operations do not invalidate clean lines"
+	depends on CACHE_L2X0
+	default n
+	help
+	   The PL310 L2 cache controller implements three types of Clean &
+	   Invalidate maintenance operations: by Physical Address
+	   (offset 0x7F0), by Index/Way (0x7F8) and by Way (0x7FC).
+	   They are architecturally defined to behave as the execution of a
+	   clean operation followed immediately by an invalidate operation,
+	   both performing to the same memory location. This functionality
+	   is not correctly implemented in PL310 as clean lines are not
+	   invalidated as a result of these operations
 endmenu
 
 source "arch/arm/common/Kconfig"
@@ -1329,6 +1342,19 @@ config PL310_ERRATA_769419
 	  on systems with an outer cache, the store buffer is drained
 	  explicitly.
 
+config PL310_ERRATA_588369
+	bool "Clean & Invalidate maintenance operations do not invalidate clean lines"
+	depends on CACHE_L2X0
+	default n
+	help
+	   The PL310 L2 cache controller implements three types of Clean &
+	   Invalidate maintenance operations: by Physical Address
+	   (offset 0x7F0), by Index/Way (0x7F8) and by Way (0x7FC).
+	   They are architecturally defined to behave as the execution of a
+	   clean operation followed immediately by an invalidate operation,
+	   both performing to the same memory location. This functionality
+	   is not correctly implemented in PL310 as clean lines are not
+	   invalidated as a result of these operations
 endmenu
 
 menu "Kernel Features"
@@ -1376,29 +1402,29 @@ config SMP_ON_UP
 	  If you don't know what to do here, say Y.
 
 config ARM_CPU_TOPOLOGY
-	bool "Support cpu topology definition"
-	depends on SMP && CPU_V7
-	default y
-	help
-	  Support ARM cpu topology definition. The MPIDR register defines
-	  affinity between processors which is then used to describe the cpu
-	  topology of an ARM System.
+          bool "Support cpu topology definition"
+          depends on SMP && CPU_V7
+          default y
+          help
+           Support ARM cpu topology definition. The MPIDR register defines
+           affinity between processors which is then used to describe the cpu
+           topology of an ARM System.
 
 config SCHED_MC
-	bool "Multi-core scheduler support"
-	depends on ARM_CPU_TOPOLOGY
-	help
-	  Multi-core scheduler support improves the CPU scheduler's decision
-	  making when dealing with multi-core CPU chips at a cost of slightly
-	  increased overhead in some places. If unsure say N here.
+          bool "Multi-core scheduler support"
+          depends on ARM_CPU_TOPOLOGY
+          help
+            Multi-core scheduler support improves the CPU scheduler's decision
+            making when dealing with multi-core CPU chips at a cost of slightly
+            increased overhead in some places. If unsure say N here.
 
 config SCHED_SMT
-	bool "SMT scheduler support"
-	depends on ARM_CPU_TOPOLOGY
-	help
-	  Improves the CPU scheduler's decision making when dealing with
-	  MultiThreading at a cost of slightly increased overhead in some
-	  places. If unsure say N here.
+         bool "SMT scheduler support"
+         depends on ARM_CPU_TOPOLOGY
+         help
+           Improves the CPU scheduler's decision making when dealing with
+           MultiThreading at a cost of slightly increased overhead in some
+           places. If unsure say N here.
 
 config HAVE_ARM_SCU
 	bool

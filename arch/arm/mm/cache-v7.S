@@ -32,6 +32,24 @@ ENTRY(v7_flush_icache_all)
 	mov	pc, lr
 ENDPROC(v7_flush_icache_all)
 
+ /*
+ *     v7_flush_dcache_level(level)
+ *
+ *     Flush the D-cache the specified level passed as input parameter.
+ *
+ *     r0 - cache level
+ *
+ *     Corrupted registers: r0-r7, r9-r11 (r6 only in Thumb mode)
+ */
+
+
+ENTRY(v7_flush_dcache_level)
+	dmb
+	mov	r3, r0, lsl #1			@ level * 2
+	mrc	p15, 1, r0, c0, c0, 1		@ read clidr
+	b	__flush_level
+ENDPROC(v7_flush_dcache_level)
+
 /*
  *	v7_flush_dcache_all()
  *
@@ -47,8 +65,9 @@ ENTRY(v7_flush_dcache_all)
 	ands	r3, r0, #0x7000000		@ extract loc from clidr
 	mov	r3, r3, lsr #23			@ left align loc bit field
 	beq	finished			@ if loc is 0, then no need to clean
+__flush_level:
 	mov	r10, #0				@ start clean at cache level 0
-loop1:
+flush_levels:
 	add	r2, r10, r10, lsr #1		@ work out 3x current cache level
 	mov	r1, r0, lsr r2			@ extract cache type bits from clidr
 	and	r1, r1, #7			@ mask of the bits for current cache only
@@ -64,9 +83,9 @@ loop1:
 	clz	r5, r4				@ find bit position of way size increment
 	ldr	r7, =0x7fff
 	ands	r7, r7, r1, lsr #13		@ extract max number of the index size
-loop2:
+loop1:
 	mov	r9, r4				@ create working copy of max way size
-loop3:
+loop2:
  ARM(	orr	r11, r10, r9, lsl r5	)	@ factor way and cache number into r11
  THUMB(	lsl	r6, r9, r5		)
  THUMB(	orr	r11, r10, r6		)	@ factor way and cache number into r11
@@ -75,13 +94,13 @@ loop3:
  THUMB(	orr	r11, r11, r6		)	@ factor index number into r11
 	mcr	p15, 0, r11, c7, c14, 2		@ clean & invalidate by set/way
 	subs	r9, r9, #1			@ decrement the way
-	bge	loop3
-	subs	r7, r7, #1			@ decrement the index
 	bge	loop2
+	subs	r7, r7, #1			@ decrement the index
+	bge	loop1
 skip:
 	add	r10, r10, #2			@ increment cache number
 	cmp	r3, r10
-	bgt	loop1
+	bgt	flush_levels
 finished:
 	mov	r10, #0				@ swith back to cache level 0
 	mcr	p15, 2, r10, c0, c0, 0		@ select current cache level in cssr
@@ -112,6 +131,29 @@ ENTRY(v7_flush_kern_cache_all)
  THUMB(	ldmfd	sp!, {r4-r7, r9-r11, lr}	)
 	mov	pc, lr
 ENDPROC(v7_flush_kern_cache_all)
+
+/*
+ *	v7_flush_kern_dcache_level(int level)
+ *      level - upper level that should be cleaned/invalidated
+ *		[valid values (-1,7)]
+ *              level == -1 forces a flush_kern_cache_all
+ *              level == 0 is a nop
+ *              1 < level <=7 flush dcache up to level
+ *	Flush the data cache up to a level passed as a platform
+ *	specific parameter
+ */
+ENTRY(v7_flush_kern_dcache_level)
+	cmp	r0, #-1				@ -1 defaults to flush all
+	beq	v7_flush_kern_cache_all
+ ARM(	stmfd	sp!, {r4-r5, r7, r9-r11, lr}	)
+ THUMB(	stmfd	sp!, {r4-r7, r9-r11, lr}	)
+	sub	r2, r0, #1
+	cmp	r2, #6
+	blls	v7_flush_dcache_level		@ jump if 0 < level <=7
+ ARM(	ldmfd	sp!, {r4-r5, r7, r9-r11, lr}	)
+ THUMB(	ldmfd	sp!, {r4-r7, r9-r11, lr}	)
+	mov	pc, lr
+ENDPROC(v7_flush_kern_dcache_level)
 
 /*
  *	v7_flush_cache_all()

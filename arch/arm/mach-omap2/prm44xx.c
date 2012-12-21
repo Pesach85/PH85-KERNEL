@@ -142,6 +142,21 @@ int omap4_prm_assert_hardreset(void __iomem *rstctrl_reg, u8 shift)
 	return 0;
 }
 
+bool omap4_pwrdm_lost_context_rff(s16 inst, s16 offset)
+{
+	u32 val;
+
+	val = omap4_prminst_read_inst_reg(OMAP4430_PRM_PARTITION, inst, offset);
+
+	if (val & OMAP4430_LOSTCONTEXT_RFF_MASK) {
+		omap4_prminst_write_inst_reg(val, OMAP4430_PRM_PARTITION, inst,
+					     offset);
+		return true;
+	}
+
+	return false;
+}
+
 /**
  * omap4_prm_deassert_hardreset - deassert a submodule hardreset line and wait
  * @rstctrl_reg: RM_RSTCTRL register address for this module

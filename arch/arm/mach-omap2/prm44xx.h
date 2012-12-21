@@ -796,6 +796,8 @@ extern u32 omap4_prm_vcvp_read(u8 offset);
 extern void omap4_prm_vcvp_write(u32 val, u8 offset);
 extern u32 omap4_prm_vcvp_rmw(u32 mask, u32 bits, u8 offset);
 
+extern bool omap4_pwrdm_lost_context_rff(s16 inst, s16 offset);
+
 # endif
 
 #endif

@@ -96,14 +96,14 @@ EXPORT_SYMBOL(need_to_quickstart);
 #define FUEL_GAUGE_VOLT_ERROR_RANGE		53	// 43 * (250/200)
 
 battery_graph_prop max17043_battery_soc_graph[] = {
-	{4100, 100 * SOC_TIMES},
+	{4150, 100 * SOC_TIMES},
 	{3893,  75 * SOC_TIMES},
 	{3783,  57 * SOC_TIMES},
 	{3721,  36 * SOC_TIMES},
 	{3686,  20 * SOC_TIMES},
 	{3575,   4 * SOC_TIMES},
 	{3487,   2 * SOC_TIMES},
-	{3300,   0 * SOC_TIMES},
+	{3200,   0 * SOC_TIMES},
 };
 
 static int max17043_reference_graph(int __x,
