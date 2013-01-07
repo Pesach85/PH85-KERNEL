@@ -145,11 +145,11 @@ and other items needed by this module.
 		((int)(high_reg*0x10) + (int)((low_reg&0xF0)/0x10))
 
 #define FINGER_MAX 10 
-#define TS_W  1123
+#define TS_W  1124
 #define TS_H  1872
 
 #ifdef LGHDK_PENDING_TOUCHKEY
-#define LGHDK_PENDING_TIME	    	175 * NSEC_PER_MSEC // 300ms
+#define LGHDK_PENDING_TIME	    	146 * NSEC_PER_MSEC // 300ms
 
 #define LGHDK_PENDING_IDLE_STATE				-1
 #define LGHDK_PENDING_HANDLED					-2
@@ -327,7 +327,9 @@ static int omap_virtualkeymap[] = {
 
 static bool synaptics_ts_handle_is_ignorearea(int xposition, int yposition)
 {
+      #ifdef COSMO_TOUCH_HAND_SUPPRESSION
 	if(g_handIgnoreValue != 0) return false;
+      #endif
 
 	if(xposition <= 13   && yposition <= 2)
 	{
@@ -372,7 +374,7 @@ static int synaptics_ts_handle_detected_touch_key(struct synaptics_ts_data* ts,i
 		ts->pending_delay_time = current_kernel_time();
 		timespec_add_ns(&ts->pending_delay_time,LGHDK_PENDING_TIME);//LGHDK_PENDING_TIME);
 		touch_prestate = 1;
-		schedule_delayed_work(&ts->touchkey_delayed_work, msecs_to_jiffies(300));
+		schedule_delayed_work(&ts->touchkey_delayed_work, msecs_to_jiffies(250));
 	}
 	else if (ts->pending_touchkey == LGHDK_PENDING_HANDLED)
 	{
@@ -385,7 +387,7 @@ static int synaptics_ts_handle_detected_touch_key(struct synaptics_ts_data* ts,i
 	else if (ts->pending_touchkey == LGHDK_PENDING_SECOND_TOUCH_DETECTED)
 	{
 		// ignore first touch
-		touch_prestate = 1;		
+		touch_prestate = 0;		
 	}
 	else if(btn_index == ts->pending_touchkey)
 	{
@@ -404,7 +406,7 @@ static int synaptics_ts_handle_detected_touch_key(struct synaptics_ts_data* ts,i
 		else
 		{
 			// keep pending
-			touch_prestate = 1;
+			touch_prestate = 0;
 		}
 	}
 	else
@@ -413,7 +415,7 @@ static int synaptics_ts_handle_detected_touch_key(struct synaptics_ts_data* ts,i
 		ts->pending_touchkey = btn_index;
 		ts->pending_delay_time = current_kernel_time();
 		touch_prestate = 1;
-		schedule_delayed_work(&ts->touchkey_delayed_work, msecs_to_jiffies(300));
+		schedule_delayed_work(&ts->touchkey_delayed_work, msecs_to_jiffies(250));
 	}	
 	
 	return touch_prestate;

@@ -72,8 +72,10 @@ static inline unsigned int __attribute_const__ read_cpuid_tcmstatus(void)
 }
 
 static inline unsigned int __attribute_const__ read_cpuid_mpidr(void)
-{	
-        return read_cpuid(CPUID_MPIDR);
+
+{  
+       return read_cpuid(CPUID_MPIDR);
+
 }
 
 /*

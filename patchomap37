@@ -1,0 +1,74 @@
+
+
+diff --git a/arch/arm/mach-omap2/omap_hwmod.c b/arch/arm/mach-omap2/omap_hwmod.c
+index 0dd48ee..3f3e22d 100644
+--- a/arch/arm/mach-omap2/omap_hwmod.c
++++ b/arch/arm/mach-omap2/omap_hwmod.c
+@@ -135,6 +135,7 @@ 
+ #include <linux/list.h>
+ #include <linux/mutex.h>
+ #include <linux/spinlock.h>
++#include <linux/irq.h>
+ 
+ #include <plat/common.h>
+ #include <plat/cpu.h>
+@@ -2324,6 +2325,24 @@  int omap_hwmod_disable_ioring_wakeup(struct omap_hwmod *oh)
+ }
+ 
+ /**
++ * omap_hwmod_mux_handle_irq - Process pad wakeup irqs.
++ *
++ * Checks every hwmod for every wakeup capable pad to see if there is an
++ * active wakeup event. If this is the case, call the corresponding ISR.
++ */
++void omap_hwmod_mux_handle_irq(void)
++{
++	struct omap_hwmod *oh;
++
++	list_for_each_entry(oh, &omap_hwmod_list, node) {
++		if (!oh->mux || !oh->mux->enabled)
++			continue;
++		if (omap_hwmod_mux_get_wake_status(oh->mux))
++			generic_handle_irq(oh->mpu_irqs[0].irq);
++	}
++}
++
++/**
+  * omap_hwmod_enable_wakeup - allow device to wake up the system
+  * @oh: struct omap_hwmod *
+  *
+diff --git a/arch/arm/mach-omap2/prcm.c b/arch/arm/mach-omap2/prcm.c
+index e7d602c..17d3d85 100644
+--- a/arch/arm/mach-omap2/prcm.c
++++ b/arch/arm/mach-omap2/prcm.c
+@@ -30,6 +30,7 @@ 
+ #include <plat/common.h>
+ #include <plat/prcm.h>
+ #include <plat/irqs.h>
++#include <plat/omap_hwmod.h>
+ 
+ #include "clock.h"
+ #include "clock2xxx.h"
+@@ -74,6 +75,9 @@  static void prcm_irq_handler(unsigned int irq, struct irq_desc *desc)
+ 	unsigned long pending[OMAP_PRCM_MAX_NR_PENDING_REG];
+ 	struct irq_chip *chip = irq_desc_get_chip(desc);
+ 
++	/* Handle PAD events first, we don't want to ack them before parse */
++	omap_hwmod_mux_handle_irq();
++
+ 	/*
+ 	 * Loop until all pending irqs are handled, since
+ 	 * generic_handle_irq(), called by prcm_irq_handle_virtirqs()
+diff --git a/arch/arm/plat-omap/include/plat/omap_hwmod.h b/arch/arm/plat-omap/include/plat/omap_hwmod.h
+index 8e5025c..076fa25 100644
+--- a/arch/arm/plat-omap/include/plat/omap_hwmod.h
++++ b/arch/arm/plat-omap/include/plat/omap_hwmod.h
+@@ -601,6 +601,7 @@  int omap_hwmod_set_clockact_none(struct omap_hwmod *oh);
+ 
+ int omap_hwmod_enable_wakeup(struct omap_hwmod *oh);
+ int omap_hwmod_disable_wakeup(struct omap_hwmod *oh);
++void omap_hwmod_mux_handle_irq(void);
+ 
+ int omap_hwmod_for_each_by_class(const char *classname,
+ 				 int (*fn)(struct omap_hwmod *oh,
+

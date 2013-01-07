@@ -1,0 +1,56 @@
+diff --git a/arch/arm/mach-omap2/include/mach/ctrl_module_wkup_44xx.h b/arch/arm/mach-omap2/include/mach/ctrl_module_wkup_44xx.h
+index a0af9ba..b763a79 100644
+--- a/arch/arm/mach-omap2/include/mach/ctrl_module_wkup_44xx.h
++++ b/arch/arm/mach-omap2/include/mach/ctrl_module_wkup_44xx.h
+@@ -28,6 +28,8 @@
+ #define OMAP4_CTRL_MODULE_WKUP_IP_REVISION		0x0000
+ #define OMAP4_CTRL_MODULE_WKUP_IP_HWINFO		0x0004
+ #define OMAP4_CTRL_MODULE_WKUP_IP_SYSCONFIG		0x0010
++#define OMAP4_CTRL_SECURE_EMIF1_SDRAM_CONFIG2_REG	0x0114
++#define OMAP4_CTRL_SECURE_EMIF2_SDRAM_CONFIG2_REG	0x011c
+ #define OMAP4_CTRL_MODULE_WKUP_CONF_DEBUG_SEL_TST_0	0x0460
+ #define OMAP4_CTRL_MODULE_WKUP_CONF_DEBUG_SEL_TST_1	0x0464
+ #define OMAP4_CTRL_MODULE_WKUP_CONF_DEBUG_SEL_TST_2	0x0468
+diff --git a/arch/arm/mach-omap2/pm44xx.c b/arch/arm/mach-omap2/pm44xx.c
+index 0472921..d4d18d9 100644
+--- a/arch/arm/mach-omap2/pm44xx.c
++++ b/arch/arm/mach-omap2/pm44xx.c
+@@ -17,6 +17,9 @@
+ #include <linux/err.h>
+ #include <linux/slab.h>
+ #include <asm/system_misc.h>
++#include <linux/io.h>
++
++#include <mach/ctrl_module_wkup_44xx.h>
+ 
+ #include "common.h"
+ #include "clockdomain.h"
+@@ -215,6 +218,27 @@ static int __init omap4_pm_init(void)
+ 
+ 	pr_err("Power Management for TI OMAP4.\n");
+ 
++	/*
++	 * Work around for OMAP443x Errata i632: "LPDDR2 Corruption After OFF
++	 * Mode Transition When CS1 Is Used On EMIF":
++	 * Overwrite EMIF1/EMIF2
++	 * SECURE_EMIF1_SDRAM_CONFIG2_REG
++	 * SECURE_EMIF2_SDRAM_CONFIG2_REG
++	 */
++	if (cpu_is_omap443x()) {
++		void __iomem *secure_ctrl_mod;
++
++		secure_ctrl_mod = ioremap(OMAP4_CTRL_MODULE_WKUP, SZ_4K);
++		BUG_ON(!secure_ctrl_mod);
++
++		__raw_writel(0x10, secure_ctrl_mod +
++			     OMAP4_CTRL_SECURE_EMIF1_SDRAM_CONFIG2_REG);
++		__raw_writel(0x10, secure_ctrl_mod +
++			     OMAP4_CTRL_SECURE_EMIF2_SDRAM_CONFIG2_REG);
++		wmb();
++		iounmap(secure_ctrl_mod);
++	}
++
+ 	ret = pwrdm_for_each(pwrdms_setup, NULL);
+ 	if (ret) {
+ 		pr_err("Failed to setup powerdomains\n");
+-- 

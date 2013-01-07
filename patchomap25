@@ -1,0 +1,173 @@
+diff --git a/arch/arm/mach-omap2/board-4430sdp.c b/arch/arm/mach-omap2/board-4430sdp.c
+index 0c6be6b..ceb2490 100644
+--- a/arch/arm/mach-omap2/board-4430sdp.c
++++ b/arch/arm/mach-omap2/board-4430sdp.c
+@@ -28,6 +28,7 @@
+ #include <plat/control.h>
+ #include <plat/timer-gp.h>
+ #include <asm/hardware/gic.h>
++#include <asm/hardware/cache-l2x0.h>
+ 
+ static struct platform_device sdp4430_lcd_device = {
+ 	.name		= "sdp4430_lcd",
+@@ -49,6 +50,35 @@ static struct omap_lcd_config sdp4430_lcd_config __initdata = {
+ static struct omap_board_config_kernel sdp4430_config[] __initdata = {
+ 	{ OMAP_TAG_LCD,		&sdp4430_lcd_config },
+ };
++#ifdef CONFIG_CACHE_L2X0
++static int __init omap_l2_cache_init(void)
++{
++	void __iomem *l2cache_base;
++
++	/* Static mapping, never released */
++	l2cache_base = ioremap(OMAP44XX_L2CACHE_BASE, SZ_4K);
++	BUG_ON(!l2cache_base);
++
++	/* Enable L2 Cache using secure api
++	 * Save/Restore relevant registers
++	 */
++	__asm__ __volatile__(
++		"stmfd r13!, {r0-r12, r14}\n"
++		"mov r0, #1\n"
++		"ldr r12, =0x102\n"
++		"dsb\n"
++		"smc\n"
++		"ldmfd r13!, {r0-r12, r14}");
++
++	/* 32KB way size, 16-way associativity,
++	* parity disabled
++	*/
++	l2x0_init(l2cache_base, 0x0e050000, 0xc0000fff);
++
++	return 0;
++}
++early_initcall(omap_l2_cache_init);
++#endif
+ 
+ static void __init gic_init_irq(void)
+ {
+diff --git a/arch/arm/mm/Kconfig b/arch/arm/mm/Kconfig
+index dd4698c..b146ae2 100644
+--- a/arch/arm/mm/Kconfig
++++ b/arch/arm/mm/Kconfig
+@@ -758,7 +758,7 @@ config CACHE_FEROCEON_L2_WRITETHROUGH
+ config CACHE_L2X0
+ 	bool "Enable the L2x0 outer cache controller"
+ 	depends on REALVIEW_EB_ARM11MP || MACH_REALVIEW_PB11MP || MACH_REALVIEW_PB1176 || \
+-		   REALVIEW_EB_A9MP || ARCH_MX35 || ARCH_MX31 || MACH_REALVIEW_PBX || ARCH_NOMADIK
++		   REALVIEW_EB_A9MP || ARCH_MX35 || ARCH_MX31 || MACH_REALVIEW_PBX || ARCH_NOMADIK || ARCH_OMAP4
+ 	default y
+ 	select OUTER_CACHE
+ 	help
+diff --git a/arch/arm/plat-omap/include/plat/omap44xx.h b/arch/arm/plat-omap/include/plat/omap44xx.h
+index e52902a..9b7870c 100644
+--- a/arch/arm/plat-omap/include/plat/omap44xx.h
++++ b/arch/arm/plat-omap/include/plat/omap44xx.h
+@@ -38,6 +38,7 @@
+ #define OMAP44XX_GIC_CPU_BASE		0x48240100
+ #define OMAP44XX_SCU_BASE		0x48240000
+ #define OMAP44XX_LOCAL_TWD_BASE		0x48240600
++#define OMAP44XX_L2CACHE_BASE		0x48242000
+ #define OMAP44XX_WKUPGEN_BASE		0x48281000
+ 
+ #define OMAP44XX_MAILBOX_BASE		(L4_44XX_BASE + 0xF4000)
+diff --git a/arch/arm/mach-omap2/omap-smp.c b/arch/arm/mach-omap2/omap-smp.c
+index 38153e5..2d0733a 100644
+--- a/arch/arm/mach-omap2/omap-smp.c
++++ b/arch/arm/mach-omap2/omap-smp.c
+@@ -73,6 +73,8 @@ int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
+ 	 * the AuxCoreBoot1 register is updated with cpu state
+ 	 * A barrier is added to ensure that write buffer is drained
+ 	 */
++	flush_cache_all();
++	outer_clean_range(__pa(&secondary_data), __pa(&secondary_data + 1));
+ 	omap_modify_auxcoreboot0(0x200, 0x0);
+ 	flush_cache_all();
+ 	smp_wmb();
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index cf8a99f..388d1e3 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -916,6 +916,19 @@ config ARM_ERRATA_460075
+ 	  ACTLR register. Note that setting specific bits in the ACTLR register
+ 	  may not be available in non-secure mode.
+ 
++config PL310_ERRATA_588369
++	bool "Clean & Invalidate maintenance operations do not invalidate clean lines"
++	depends on CACHE_L2X0
++	default n
++	help
++	   The PL310 L2 cache controller implements three types of Clean &
++	   Invalidate maintenance operations: by Physical Address
++	   (offset 0x7F0), by Index/Way (0x7F8) and by Way (0x7FC).
++	   They are architecturally defined to behave as the execution of a
++	   clean operation followed immediately by an invalidate operation,
++	   both performing to the same memory location. This functionality
++	   is not correctly implemented in PL310 as clean lines are not
++	   invalidated as a result of these operations
+ endmenu
+ 
+ source "arch/arm/common/Kconfig"
+diff --git a/arch/arm/mm/cache-l2x0.c b/arch/arm/mm/cache-l2x0.c
+index 747f9a9..c3905a9 100644
+--- a/arch/arm/mm/cache-l2x0.c
++++ b/arch/arm/mm/cache-l2x0.c
+@@ -88,8 +88,40 @@ static void l2x0_flush_range(unsigned long start, unsigned long end)
+ 	unsigned long addr;
+ 
+ 	start &= ~(CACHE_LINE_SIZE - 1);
++#ifdef CONFIG_PL310_ERRATA_588369
++	/*
++	 * Disable Write-Back and Cache Linefill (set bits [1:0] of the Debug
++	 * Control Register)
++	 */
++	__asm__ __volatile__(
++	"stmfd r13!, {r0-r12, r14}\n"
++	"mov r0, #3\n"
++	"ldr r12, =0x100\n"
++	"dsb\n"
++	"smc\n"
++	"ldmfd r13!, {r0-r12, r14}");
++
++	/* Clean by PA followed by Invalidate by PA */
++	for (addr = start; addr < end; addr += CACHE_LINE_SIZE) {
++		sync_writel(addr, L2X0_CLEAN_LINE_PA, 1);
++		sync_writel(addr, L2X0_INV_LINE_PA, 1);
++	}
++
++	/*
++	 * Enable Write-Back and Cache Linefill (set bits [1:0] of the Debug
++	 * Control Register)
++	 */
++	__asm__ __volatile__(
++	"stmfd r13!, {r0-r12, r14}\n"
++	"mov r0, #0\n"
++	"ldr r12, =0x100\n"
++	"dsb\n"
++	"smc\n"
++	"ldmfd r13!, {r0-r12, r14}");
++#else
+ 	for (addr = start; addr < end; addr += CACHE_LINE_SIZE)
+ 		sync_writel(addr, L2X0_CLEAN_INV_LINE_PA, 1);
++#endif
+ 	cache_sync();
+ }
+
+diff --git a/arch/arm/configs/omap_4430sdp_defconfig b/arch/arm/configs/omap_4430sdp_defconfig
+index 49df3ad..2a8d555 100644
+--- a/arch/arm/configs/omap_4430sdp_defconfig
++++ b/arch/arm/configs/omap_4430sdp_defconfig
+@@ -243,10 +243,13 @@ CONFIG_CPU_CP15_MMU=y
+ # CONFIG_CPU_DCACHE_DISABLE is not set
+ # CONFIG_CPU_BPREDICT_DISABLE is not set
+ CONFIG_HAS_TLS_REG=y
++CONFIG_OUTER_CACHE=y
++CONFIG_CACHE_L2X0=y
+ CONFIG_ARM_L1_CACHE_SHIFT=5
+ # CONFIG_ARM_ERRATA_430973 is not set
+ # CONFIG_ARM_ERRATA_458693 is not set
+ # CONFIG_ARM_ERRATA_460075 is not set
++CONFIG_PL310_ERRATA_588369=y
+ CONFIG_ARM_GIC=y
+ 
+ #

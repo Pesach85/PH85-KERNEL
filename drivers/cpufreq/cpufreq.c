@@ -553,6 +553,8 @@ static ssize_t show_scaling_setspeed(struct cpufreq_policy *policy, char *buf)
 	return policy->governor->show_setspeed(policy, buf);
 }
 
+
+
 /**
  * show_scaling_driver - show the current cpufreq HW/BIOS limitation
  */
@@ -1207,15 +1209,13 @@ EXPORT_SYMBOL(cpufreq_quick_get);
  */
 unsigned int cpufreq_quick_get_max(unsigned int cpu)
 {
-	struct cpufreq_policy *policy = cpufreq_cpu_get(cpu);
-	unsigned int ret_freq = 0;
-
-	if (policy) {
-		ret_freq = policy->max;
-		cpufreq_cpu_put(policy);
-	}
-
-	return ret_freq;
+  struct cpufreq_policy *policy = cpufreq_cpu_get(cpu);
+  unsigned int ret_freq = 0;
+  if (policy) {
+    ret_freq = policy->max;
+    cpufreq_cpu_put(policy);
+  }
+  return ret_freq;
 }
 EXPORT_SYMBOL(cpufreq_quick_get_max);
 

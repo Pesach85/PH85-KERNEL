@@ -1,0 +1,62 @@
+--- drivers/mfd/omap-usb-host.c
++++ drivers/mfd/omap-usb-host.c
+@@ -463,55 +532,10 @@
+ 	reg |= OMAP4_UHH_HOSTCONFIG_APP_START_CLK;
+ 	reg &= ~OMAP_UHH_HOSTCONFIG_INCRX_ALIGN_EN;
+ 
+-	if (is_omap_usbhs_rev1(omap)) {
+-		if (pdata->port_mode[0] == OMAP_USBHS_PORT_MODE_UNUSED)
+-			reg &= ~OMAP_UHH_HOSTCONFIG_P1_CONNECT_STATUS;
+-		if (pdata->port_mode[1] == OMAP_USBHS_PORT_MODE_UNUSED)
+-			reg &= ~OMAP_UHH_HOSTCONFIG_P2_CONNECT_STATUS;
+-		if (pdata->port_mode[2] == OMAP_USBHS_PORT_MODE_UNUSED)
+-			reg &= ~OMAP_UHH_HOSTCONFIG_P3_CONNECT_STATUS;
+-
+-		/* Bypass the TLL module for PHY mode operation */
+-		if (pdata->single_ulpi_bypass) {
+-			dev_dbg(dev, "OMAP3 ES version <= ES2.1\n");
+-			if (is_ehci_phy_mode(pdata->port_mode[0]) ||
+-				is_ehci_phy_mode(pdata->port_mode[1]) ||
+-					is_ehci_phy_mode(pdata->port_mode[2]))
+-				reg &= ~OMAP_UHH_HOSTCONFIG_ULPI_BYPASS;
+-			else
+-				reg |= OMAP_UHH_HOSTCONFIG_ULPI_BYPASS;
+-		} else {
+-			dev_dbg(dev, "OMAP3 ES version > ES2.1\n");
+-			if (is_ehci_phy_mode(pdata->port_mode[0]))
+-				reg &= ~OMAP_UHH_HOSTCONFIG_ULPI_P1_BYPASS;
+-			else
+-				reg |= OMAP_UHH_HOSTCONFIG_ULPI_P1_BYPASS;
+-			if (is_ehci_phy_mode(pdata->port_mode[1]))
+-				reg &= ~OMAP_UHH_HOSTCONFIG_ULPI_P2_BYPASS;
+-			else
+-				reg |= OMAP_UHH_HOSTCONFIG_ULPI_P2_BYPASS;
+-			if (is_ehci_phy_mode(pdata->port_mode[2]))
+-				reg &= ~OMAP_UHH_HOSTCONFIG_ULPI_P3_BYPASS;
+-			else
+-				reg |= OMAP_UHH_HOSTCONFIG_ULPI_P3_BYPASS;
+-		}
+-	} else if (is_omap_usbhs_rev2(omap)) {
+-		/* Clear port mode fields for PHY mode*/
+-		reg &= ~OMAP4_P1_MODE_CLEAR;
+-		reg &= ~OMAP4_P2_MODE_CLEAR;
+-
+-		if (is_ehci_tll_mode(pdata->port_mode[0]) ||
+-			(is_ohci_port(pdata->port_mode[0])))
+-			reg |= OMAP4_P1_MODE_TLL;
+-		else if (is_ehci_hsic_mode(pdata->port_mode[0]))
+-			reg |= OMAP4_P1_MODE_HSIC;
+-
+-		if (is_ehci_tll_mode(pdata->port_mode[1]) ||
+-			(is_ohci_port(pdata->port_mode[1])))
+-			reg |= OMAP4_P2_MODE_TLL;
+-		else if (is_ehci_hsic_mode(pdata->port_mode[1]))
+-			reg |= OMAP4_P2_MODE_HSIC;
+-	}
++	if (is_omap_usbhs_rev1(omap))
++		reg = omap_usbhs_rev1_hostconfig(omap, reg);
++	else if (is_omap_usbhs_rev2(omap))
++		reg = omap_usbhs_rev2_hostconfig(omap, reg);
+ 
+ 	usbhs_write(omap->uhh_base, OMAP_UHH_HOSTCONFIG, reg);
+ 	dev_dbg(dev, "UHH setup done, uhh_hostconfig=%x\n", reg);
