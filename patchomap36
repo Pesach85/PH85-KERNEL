@@ -1,0 +1,740 @@
+
+
+
+diff --git a/arch/arm/plat-omap/mcbsp.c b/arch/arm/plat-omap/mcbsp.c
+index d565b36..dd6a19e 100644
+--- a/arch/arm/plat-omap/mcbsp.c
++++ b/arch/arm/plat-omap/mcbsp.c
+@@ -1086,16 +1086,6 @@  static const struct attribute_group additional_attr_group = {
+ 	.attrs = (struct attribute **)additional_attrs,
+ };
+ 
+-static inline int __devinit omap_additional_add(struct device *dev)
+-{
+-	return sysfs_create_group(&dev->kobj, &additional_attr_group);
+-}
+-
+-static inline void __devexit omap_additional_remove(struct device *dev)
+-{
+-	sysfs_remove_group(&dev->kobj, &additional_attr_group);
+-}
+-
+ static const struct attribute *sidetone_attrs[] = {
+ 	&dev_attr_st_taps.attr,
+ 	NULL,
+@@ -1105,10 +1095,9 @@  static const struct attribute_group sidetone_attr_group = {
+ 	.attrs = (struct attribute **)sidetone_attrs,
+ };
+ 
+-static int __devinit omap_st_add(struct omap_mcbsp *mcbsp)
++static int __devinit omap_mcbsp_st_add(struct omap_mcbsp *mcbsp,
++				       struct resource *res)
+ {
+-	struct platform_device *pdev;
+-	struct resource *res;
+ 	struct omap_mcbsp_st_data *st_data;
+ 	int err;
+ 
+@@ -1118,9 +1107,6 @@  static int __devinit omap_st_add(struct omap_mcbsp *mcbsp)
+ 		goto err1;
+ 	}
+ 
+-	pdev = container_of(mcbsp->dev, struct platform_device, dev);
+-
+-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "sidetone");
+ 	st_data->io_base_st = ioremap(res->start, resource_size(res));
+ 	if (!st_data->io_base_st) {
+ 		err = -ENOMEM;
+@@ -1140,61 +1126,42 @@  err2:
+ 	kfree(st_data);
+ err1:
+ 	return err;
+-
+ }
+ 
+-static void __devexit omap_st_remove(struct omap_mcbsp *mcbsp)
++static void __devexit omap_mcbsp_st_free(struct omap_mcbsp *mcbsp)
+ {
+ 	struct omap_mcbsp_st_data *st_data = mcbsp->st_data;
+ 
+-	if (st_data) {
+-		sysfs_remove_group(&mcbsp->dev->kobj, &sidetone_attr_group);
+-		iounmap(st_data->io_base_st);
+-		kfree(st_data);
+-	}
++	sysfs_remove_group(&mcbsp->dev->kobj, &sidetone_attr_group);
++	iounmap(st_data->io_base_st);
++	kfree(st_data);
+ }
+ 
+-static inline void __devinit omap34xx_device_init(struct omap_mcbsp *mcbsp)
++static inline int __devinit omap_mcbsp_dmactrl_add(struct omap_mcbsp *mcbsp)
+ {
+-	mcbsp->dma_op_mode = MCBSP_DMA_MODE_ELEMENT;
+-	if (mcbsp->mcbsp_config_type == MCBSP_CONFIG_TYPE3) {
+-		/*
+-		 * Initially configure the maximum thresholds to a safe value.
+-		 * The McBSP FIFO usage with these values should not go under
+-		 * 16 locations.
+-		 * If the whole FIFO without safety buffer is used, than there
+-		 * is a possibility that the DMA will be not able to push the
+-		 * new data on time, causing channel shifts in runtime.
+-		 */
+-		mcbsp->max_tx_thres = max_thres(mcbsp) - 0x10;
+-		mcbsp->max_rx_thres = max_thres(mcbsp) - 0x10;
+-		/*
+-		 * REVISIT: Set dmap_op_mode to THRESHOLD as default
+-		 * for mcbsp2 instances.
+-		 */
+-		if (omap_additional_add(mcbsp->dev))
+-			dev_warn(mcbsp->dev,
+-				"Unable to create additional controls\n");
+-
+-		if (mcbsp->id == 2 || mcbsp->id == 3)
+-			if (omap_st_add(mcbsp))
+-				dev_warn(mcbsp->dev,
+-				 "Unable to create sidetone controls\n");
++	int err;
+ 
+-	} else {
+-		mcbsp->max_tx_thres = -EINVAL;
+-		mcbsp->max_rx_thres = -EINVAL;
+-	}
++	/*
++	 * Initially configure the maximum thresholds to a safe value.
++	 * The McBSP FIFO usage with these values should not go under
++	 * 16 locations.
++	 * If the whole FIFO without safety buffer is used, than there
++	 * is a possibility that the DMA will be not able to push the
++	 * new data on time, causing channel shifts in runtime.
++	 */
++	mcbsp->max_tx_thres = max_thres(mcbsp) - 0x10;
++	mcbsp->max_rx_thres = max_thres(mcbsp) - 0x10;
++
++	err = sysfs_create_group(&mcbsp->dev->kobj, &additional_attr_group);
++	if (err)
++		dev_warn(mcbsp->dev, "Unable to create additional controls\n");
++
++	return err;
+ }
+ 
+-static inline void __devexit omap34xx_device_exit(struct omap_mcbsp *mcbsp)
++static inline void __devexit omap_mcbsp_dmactrl_free(struct omap_mcbsp *mcbsp)
+ {
+-	if (mcbsp->mcbsp_config_type == MCBSP_CONFIG_TYPE3) {
+-		omap_additional_remove(mcbsp->dev);
+-
+-		if (mcbsp->id == 2 || mcbsp->id == 3)
+-			omap_st_remove(mcbsp);
+-	}
++	sysfs_remove_group(&mcbsp->dev->kobj, &additional_attr_group);
+ }
+ 
+ /*
+@@ -1295,13 +1262,32 @@  static int __devinit omap_mcbsp_probe(struct platform_device *pdev)
+ 	mcbsp_ptr[id] = mcbsp;
+ 	mcbsp->mcbsp_config_type = pdata->mcbsp_config_type;
+ 	platform_set_drvdata(pdev, mcbsp);
+-	pm_runtime_enable(mcbsp->dev);
+ 
+-	/* Initialize mcbsp properties for OMAP34XX if needed / applicable */
+-	omap34xx_device_init(mcbsp);
++	mcbsp->dma_op_mode = MCBSP_DMA_MODE_ELEMENT;
++	if (mcbsp->mcbsp_config_type == MCBSP_CONFIG_TYPE3) {
++		ret = omap_mcbsp_dmactrl_add(mcbsp);
++		if (ret)
++			goto err_thres;
++	} else {
++		mcbsp->max_tx_thres = -EINVAL;
++		mcbsp->max_rx_thres = -EINVAL;
++	}
++	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "sidetone");
++	if (res) {
++		ret = omap_mcbsp_st_add(mcbsp, res);
++		if (ret)
++			goto err_st;
++	}
++
++	pm_runtime_enable(mcbsp->dev);
+ 
+ 	return 0;
+ 
++err_st:
++	if (mcbsp->mcbsp_config_type == MCBSP_CONFIG_TYPE3)
++		omap_mcbsp_dmactrl_free(mcbsp);
++err_thres:
++	clk_put(mcbsp->fclk);
+ err_res:
+ 	iounmap(mcbsp->io_base);
+ err_ioremap:
+@@ -1316,12 +1302,14 @@  static int __devexit omap_mcbsp_remove(struct platform_device *pdev)
+ 
+ 	platform_set_drvdata(pdev, NULL);
+ 	if (mcbsp) {
+-
+ 		if (mcbsp->pdata && mcbsp->pdata->ops &&
+ 				mcbsp->pdata->ops->free)
+ 			mcbsp->pdata->ops->free(mcbsp->id);
+ 
+-		omap34xx_device_exit(mcbsp);
++		if (mcbsp->mcbsp_config_type == MCBSP_CONFIG_TYPE3)
++			omap_mcbsp_dmactrl_free(mcbsp);
++		if (mcbsp->st_data)
++			omap_mcbsp_st_free(mcbsp);
+ 
+ 		clk_put(mcbsp->fclk);
+
+diff --git a/drivers/gpio/gpio-omap.c b/drivers/gpio/gpio-omap.c
+index e9d2e1e..b2c1892 100644
+--- a/drivers/gpio/gpio-omap.c
++++ b/drivers/gpio/gpio-omap.c
+@@ -1167,142 +1167,153 @@  static int omap_gpio_resume(struct device *dev)
+ static void omap_gpio_save_context(struct gpio_bank *bank);
+ static void omap_gpio_restore_context(struct gpio_bank *bank);
+ 
+-void omap2_gpio_prepare_for_idle(int off_mode)
++static int omap_gpio_runtime_suspend(struct device *dev)
+ {
+-	struct gpio_bank *bank;
++	struct platform_device *pdev = to_platform_device(dev);
++	struct gpio_bank *bank = platform_get_drvdata(pdev);
++	u32 l1 = 0, l2 = 0;
++	int j;
+ 
+-	list_for_each_entry(bank, &omap_gpio_list, node) {
+-		u32 l1 = 0, l2 = 0;
+-		int j;
++	for (j = 0; j < hweight_long(bank->dbck_enable_mask); j++)
++		clk_disable(bank->dbck);
+ 
+-		if (!bank->loses_context)
+-			continue;
++	/* If going to OFF, remove triggering for all
++	 * non-wakeup GPIOs.  Otherwise spurious IRQs will be
++	 * generated.  See OMAP2420 Errata item 1.101. */
++	if (!(bank->enabled_non_wakeup_gpios))
++		goto save_gpio_ctx;
+ 
+-		for (j = 0; j < hweight_long(bank->dbck_enable_mask); j++)
+-			clk_disable(bank->dbck);
++	bank->saved_datain = __raw_readl(bank->base +
++						bank->regs->datain);
++	l1 = __raw_readl(bank->base + bank->regs->fallingdetect);
++	l2 = __raw_readl(bank->base + bank->regs->risingdetect);
+ 
+-		if (!off_mode)
+-			continue;
++	bank->saved_fallingdetect = l1;
++	bank->saved_risingdetect = l2;
++	l1 &= ~bank->enabled_non_wakeup_gpios;
++	l2 &= ~bank->enabled_non_wakeup_gpios;
+ 
+-		if (IS_ERR_VALUE(pm_runtime_put_sync(bank->dev) < 0))
+-			dev_err(bank->dev, "%s: GPIO bank %d "
+-					"pm_runtime_put_sync failed\n",
+-					__func__, bank->id);
++	__raw_writel(l1, bank->base + bank->regs->fallingdetect);
++	__raw_writel(l2, bank->base + bank->regs->risingdetect);
++
++save_gpio_ctx:
++	if (bank->get_context_loss_count)
++		bank->ctx_loss_count = bank->get_context_loss_count(bank->dev);
++	omap_gpio_save_context(bank);
++
++	return 0;
++}
++
++static int omap_gpio_runtime_resume(struct device *dev)
++{
++	struct platform_device *pdev = to_platform_device(dev);
++	struct gpio_bank *bank = platform_get_drvdata(pdev);
++	u32 ctx_lost_cnt_after;
++	u32 l = 0, gen, gen0, gen1;
++	int j;
++
++	for (j = 0; j < hweight_long(bank->dbck_enable_mask); j++)
++		clk_enable(bank->dbck);
+ 
+-		/* If going to OFF, remove triggering for all
+-		 * non-wakeup GPIOs.  Otherwise spurious IRQs will be
+-		 * generated.  See OMAP2420 Errata item 1.101. */
+-		if (!(bank->enabled_non_wakeup_gpios))
+-			goto save_gpio_ctx;
++	if (bank->get_context_loss_count) {
++		ctx_lost_cnt_after =
++			bank->get_context_loss_count(bank->dev);
++		if (ctx_lost_cnt_after != bank->ctx_loss_count)
++			omap_gpio_restore_context(bank);
++	}
+ 
+-		bank->saved_datain = __raw_readl(bank->base +
+-							bank->regs->datain);
+-		l1 = __raw_readl(bank->base + bank->regs->fallingdetect);
+-		l2 = __raw_readl(bank->base + bank->regs->risingdetect);
++	if (!(bank->enabled_non_wakeup_gpios))
++		return 0;
+ 
+-		bank->saved_fallingdetect = l1;
+-		bank->saved_risingdetect = l2;
+-		l1 &= ~bank->enabled_non_wakeup_gpios;
+-		l2 &= ~bank->enabled_non_wakeup_gpios;
++	__raw_writel(bank->saved_fallingdetect,
++			bank->base + bank->regs->fallingdetect);
++	__raw_writel(bank->saved_risingdetect,
++			bank->base + bank->regs->risingdetect);
++	l = __raw_readl(bank->base + bank->regs->datain);
+ 
+-		__raw_writel(l1, bank->base + bank->regs->fallingdetect);
+-		__raw_writel(l2, bank->base + bank->regs->risingdetect);
++	/* Check if any of the non-wakeup interrupt GPIOs have changed
++	 * state.  If so, generate an IRQ by software.  This is
++	 * horribly racy, but it's the best we can do to work around
++	 * this silicon bug. */
++	l ^= bank->saved_datain;
++	l &= bank->enabled_non_wakeup_gpios;
+ 
+-save_gpio_ctx:
+-		if (bank->get_context_loss_count)
+-			bank->ctx_loss_count =
+-				bank->get_context_loss_count(bank->dev);
++	/*
++	 * No need to generate IRQs for the rising edge for gpio IRQs
++	 * configured with falling edge only; and vice versa.
++	 */
++	gen0 = l & bank->saved_fallingdetect;
++	gen0 &= bank->saved_datain;
++	gen1 = l & bank->saved_risingdetect;
++	gen1 &= ~(bank->saved_datain);
++
++	/* FIXME: Consider GPIO IRQs with level detections properly! */
++	gen = l & (~(bank->saved_fallingdetect) &
++			~(bank->saved_risingdetect));
++	/* Consider all GPIO IRQs needed to be updated */
++	gen |= gen0 | gen1;
++
++	if (gen) {
++		u32 old0, old1;
++
++		old0 = __raw_readl(bank->base +
++					bank->regs->leveldetect0);
++		old1 = __raw_readl(bank->base +
++					bank->regs->leveldetect1);
++
++		__raw_writel(old0, bank->base +
++					bank->regs->leveldetect0);
++		__raw_writel(old1, bank->base +
++					bank->regs->leveldetect1);
++		if (cpu_is_omap24xx() || cpu_is_omap34xx()) {
++			old0 |= gen;
++			old1 |= gen;
++		}
+ 
+-		omap_gpio_save_context(bank);
++		if (cpu_is_omap44xx()) {
++			old0 |= l;
++			old1 |= l;
++		}
++		__raw_writel(old0, bank->base +
++					bank->regs->leveldetect0);
++		__raw_writel(old1, bank->base +
++					bank->regs->leveldetect1);
+ 	}
++
++	return 0;
+ }
+ 
+-void omap2_gpio_resume_after_idle(void)
++
++void omap2_gpio_prepare_for_idle(int off_mode)
+ {
+ 	struct gpio_bank *bank;
+ 
+-	list_for_each_entry(bank, &omap_gpio_list, node) {
+-		u32 ctx_lost_cnt_after;
+-		u32 l = 0, gen, gen0, gen1;
+-		int j;
++	if (!off_mode)
++		return;
+ 
+-		if (!bank->loses_context)
++	list_for_each_entry(bank, &omap_gpio_list, node) {
++		if (!bank->mod_usage || !bank->loses_context)
+ 			continue;
+ 
+-		if (IS_ERR_VALUE(pm_runtime_get_sync(bank->dev) < 0))
++		if (IS_ERR_VALUE(pm_runtime_put_sync(bank->dev) < 0))
+ 			dev_err(bank->dev, "%s: GPIO bank %d "
+-					"pm_runtime_get_sync failed\n",
++					"pm_runtime_put_sync failed\n",
+ 					__func__, bank->id);
++	}
++}
+ 
+-		for (j = 0; j < hweight_long(bank->dbck_enable_mask); j++)
+-			clk_enable(bank->dbck);
+-
+-		if (bank->get_context_loss_count) {
+-			ctx_lost_cnt_after =
+-				bank->get_context_loss_count(bank->dev);
+-			if (ctx_lost_cnt_after != bank->ctx_loss_count ||
+-				!ctx_lost_cnt_after)
+-				omap_gpio_restore_context(bank);
+-		}
++void omap2_gpio_resume_after_idle(void)
++{
++	struct gpio_bank *bank;
+ 
+-		if (!(bank->enabled_non_wakeup_gpios))
++	list_for_each_entry(bank, &omap_gpio_list, node) {
++		if (!bank->mod_usage || !bank->loses_context)
+ 			continue;
+ 
+-		__raw_writel(bank->saved_fallingdetect,
+-				bank->base + bank->regs->fallingdetect);
+-		__raw_writel(bank->saved_risingdetect,
+-				bank->base + bank->regs->risingdetect);
+-		l = __raw_readl(bank->base + bank->regs->datain);
+-
+-		/* Check if any of the non-wakeup interrupt GPIOs have changed
+-		 * state.  If so, generate an IRQ by software.  This is
+-		 * horribly racy, but it's the best we can do to work around
+-		 * this silicon bug. */
+-		l ^= bank->saved_datain;
+-		l &= bank->enabled_non_wakeup_gpios;
+-
+-		/*
+-		 * No need to generate IRQs for the rising edge for gpio IRQs
+-		 * configured with falling edge only; and vice versa.
+-		 */
+-		gen0 = l & bank->saved_fallingdetect;
+-		gen0 &= bank->saved_datain;
+-
+-		gen1 = l & bank->saved_risingdetect;
+-		gen1 &= ~(bank->saved_datain);
+-
+-		/* FIXME: Consider GPIO IRQs with level detections properly! */
+-		gen = l & (~(bank->saved_fallingdetect) &
+-				~(bank->saved_risingdetect));
+-		/* Consider all GPIO IRQs needed to be updated */
+-		gen |= gen0 | gen1;
+-
+-		if (gen) {
+-			u32 old0, old1;
+-
+-			old0 = __raw_readl(bank->base +
+-						bank->regs->leveldetect0);
+-			old1 = __raw_readl(bank->base +
+-						bank->regs->leveldetect1);
+-
+-			__raw_writel(old0, bank->base +
+-						bank->regs->leveldetect0);
+-			__raw_writel(old1, bank->base +
+-						bank->regs->leveldetect1);
+-			if (cpu_is_omap24xx() || cpu_is_omap34xx()) {
+-				old0 |= gen;
+-				old1 |= gen;
+-			}
+-
+-			if (cpu_is_omap44xx()) {
+-				old0 |= l;
+-				old1 |= l;
+-			}
+-			__raw_writel(old0, bank->base +
+-						bank->regs->leveldetect0);
+-			__raw_writel(old1, bank->base +
+-						bank->regs->leveldetect1);
+-		}
++		if (IS_ERR_VALUE(pm_runtime_get_sync(bank->dev) < 0))
++			dev_err(bank->dev, "%s: GPIO bank %d "
++					"pm_runtime_get_sync failed\n",
++					__func__, bank->id);
+ 	}
+ }
+ 
+@@ -1347,9 +1358,14 @@  static void omap_gpio_restore_context(struct gpio_bank *bank)
+ 				bank->base + bank->regs->fallingdetect);
+ 	__raw_writel(bank->context.dataout, bank->base + bank->regs->dataout);
+ }
++#else
++#define omap_gpio_runtime_suspend NULL
++#define omap_gpio_runtime_resume NULL
+ #endif
+ 
+ static const struct dev_pm_ops gpio_pm_ops = {
++	.runtime_suspend	= omap_gpio_runtime_suspend,
++	.runtime_resume		= omap_gpio_runtime_resume,
+ 	.suspend		= omap_gpio_suspend,
+ 	.resume			= omap_gpio_resume,
+ };
+
+diff --git a/drivers/mmc/host/omap_hsmmc.c b/drivers/mmc/host/omap_hsmmc.c
+index 3d01e3f..aae4105 100644
+--- a/drivers/mmc/host/omap_hsmmc.c
++++ b/drivers/mmc/host/omap_hsmmc.c
+@@ -145,7 +145,6 @@  struct omap_hsmmc_host {
+ 	struct	mmc_command	*cmd;
+ 	struct	mmc_data	*data;
+ 	struct	clk		*fclk;
+-	struct	clk		*iclk;
+ 	struct	clk		*dbclk;
+ 	/*
+ 	 * vcc == configured supply
+@@ -1853,17 +1852,10 @@  static int __init omap_hsmmc_probe(struct platform_device *pdev)
+ 
+ 	spin_lock_init(&host->irq_lock);
+ 
+-	host->iclk = clk_get(&pdev->dev, "ick");
+-	if (IS_ERR(host->iclk)) {
+-		ret = PTR_ERR(host->iclk);
+-		host->iclk = NULL;
+-		goto err1;
+-	}
+ 	host->fclk = clk_get(&pdev->dev, "fck");
+ 	if (IS_ERR(host->fclk)) {
+ 		ret = PTR_ERR(host->fclk);
+ 		host->fclk = NULL;
+-		clk_put(host->iclk);
+ 		goto err1;
+ 	}
+ 
+@@ -2021,7 +2013,6 @@  err_irq:
+ 	pm_runtime_mark_last_busy(host->dev);
+ 	pm_runtime_put_autosuspend(host->dev);
+ 	clk_put(host->fclk);
+-	clk_put(host->iclk);
+ 	if (host->got_dbclk) {
+ 		clk_disable(host->dbclk);
+ 		clk_put(host->dbclk);
+@@ -2057,7 +2048,6 @@  static int omap_hsmmc_remove(struct platform_device *pdev)
+ 		pm_runtime_put_sync(host->dev);
+ 		pm_runtime_disable(host->dev);
+ 		clk_put(host->fclk);
+-		clk_put(host->iclk);
+ 		if (host->got_dbclk) {
+ 			clk_disable(host->dbclk);
+ 			clk_put(host->dbclk);
+
+diff --git a/drivers/usb/host/ehci-omap.c b/drivers/usb/host/ehci-omap.c
+index 178f63e..a02a684 100644
+--- a/drivers/usb/host/ehci-omap.c
++++ b/drivers/usb/host/ehci-omap.c
+@@ -259,14 +259,32 @@  static void ehci_hcd_omap_shutdown(struct platform_device *pdev)
+ 		hcd->driver->shutdown(hcd);
+ }
+ 
++static int omap_ehci_resume(struct device *dev)
++{
++	if (dev->parent)
++		pm_runtime_get_sync(dev->parent);
++	return 0;
++}
++
++static int omap_ehci_suspend(struct device *dev)
++{
++	if (dev->parent)
++		pm_runtime_put_sync(dev->parent);
++	return 0;
++}
++
++static const struct dev_pm_ops omap_ehci_dev_pm_ops = {
++	.suspend	= omap_ehci_suspend,
++	.resume		= omap_ehci_resume,
++};
++
+ static struct platform_driver ehci_hcd_omap_driver = {
+ 	.probe			= ehci_hcd_omap_probe,
+ 	.remove			= ehci_hcd_omap_remove,
+ 	.shutdown		= ehci_hcd_omap_shutdown,
+-	/*.suspend		= ehci_hcd_omap_suspend, */
+-	/*.resume		= ehci_hcd_omap_resume, */
+ 	.driver = {
+ 		.name		= "ehci-omap",
++		.pm		= &omap_ehci_dev_pm_ops,
+ 	}
+ };
+ 
+diff --git a/drivers/usb/host/ohci-omap3.c b/drivers/usb/host/ohci-omap3.c
+index 6ce50de..a1a7981 100644
+--- a/drivers/usb/host/ohci-omap3.c
++++ b/drivers/usb/host/ohci-omap3.c
+@@ -230,12 +230,33 @@  static void ohci_hcd_omap3_shutdown(struct platform_device *pdev)
+ 		hcd->driver->shutdown(hcd);
+ }
+ 
++
++static int omap_ohci_resume(struct device *dev)
++{
++	if (dev->parent)
++		pm_runtime_get_sync(dev->parent);
++	return 0;
++}
++
++static int omap_ohci_suspend(struct device *dev)
++{
++	if (dev->parent)
++		pm_runtime_put_sync(dev->parent);
++	return 0;
++}
++
++static const struct dev_pm_ops omap_ohci_dev_pm_ops = {
++	.suspend	= omap_ohci_suspend,
++	.resume		= omap_ohci_resume,
++};
++
+ static struct platform_driver ohci_hcd_omap3_driver = {
+ 	.probe		= ohci_hcd_omap3_probe,
+ 	.remove		= __devexit_p(ohci_hcd_omap3_remove),
+ 	.shutdown	= ohci_hcd_omap3_shutdown,
+ 	.driver		= {
+ 		.name	= "ohci-omap3",
++		.pm		= &omap_ohci_dev_pm_ops,
+ 	},
+ };
+ 
+
+diff --git a/arch/arm/mach-omap2/powerdomains44xx_data.c b/arch/arm/mach-omap2/powerdomains44xx_data.c
+index 8f46e7d..247e794 100644
+--- a/arch/arm/mach-omap2/powerdomains44xx_data.c
++++ b/arch/arm/mach-omap2/powerdomains44xx_data.c
+@@ -205,7 +205,7 @@  static struct powerdomain mpu_44xx_pwrdm = {
+ 	.prcm_offs	  = OMAP4430_PRM_MPU_INST,
+ 	.prcm_partition	  = OMAP4430_PRM_PARTITION,
+ 	.omap_chip	  = OMAP_CHIP_INIT(CHIP_IS_OMAP4430),
+-	.pwrsts		  = PWRSTS_OFF_RET_ON,
++	.pwrsts		  = PWRSTS_RET_ON,
+ 	.pwrsts_logic_ret = PWRSTS_OFF_RET,
+ 	.banks		  = 3,
+ 	.pwrsts_mem_ret	= {
+
+diff --git a/arch/arm/mach-omap2/omap_hwmod_44xx_data.c b/arch/arm/mach-omap2/omap_hwmod_44xx_data.c
+index ce4259d..4bb12b8 100644
+--- a/arch/arm/mach-omap2/omap_hwmod_44xx_data.c
++++ b/arch/arm/mach-omap2/omap_hwmod_44xx_data.c
+@@ -1134,7 +1134,7 @@  static struct omap_hwmod_addr_space omap44xx_dss_dma_addrs[] = {
+ static struct omap_hwmod_ocp_if omap44xx_l3_main_2__dss = {
+ 	.master		= &omap44xx_l3_main_2_hwmod,
+ 	.slave		= &omap44xx_dss_hwmod,
+-	.clk		= "l3_div_ck",
++	.clk		= "dss_fck",
+ 	.addr		= omap44xx_dss_dma_addrs,
+ 	.addr_cnt	= ARRAY_SIZE(omap44xx_dss_dma_addrs),
+ 	.user		= OCP_USER_SDMA,
+@@ -1175,7 +1175,7 @@  static struct omap_hwmod_opt_clk dss_opt_clks[] = {
+ static struct omap_hwmod omap44xx_dss_hwmod = {
+ 	.name		= "dss_core",
+ 	.class		= &omap44xx_dss_hwmod_class,
+-	.main_clk	= "dss_fck",
++	.main_clk	= "dss_dss_clk",
+ 	.prcm = {
+ 		.omap4 = {
+ 			.clkctrl_reg = OMAP4430_CM_DSS_DSS_CLKCTRL,
+@@ -1235,7 +1235,7 @@  static struct omap_hwmod_addr_space omap44xx_dss_dispc_dma_addrs[] = {
+ static struct omap_hwmod_ocp_if omap44xx_l3_main_2__dss_dispc = {
+ 	.master		= &omap44xx_l3_main_2_hwmod,
+ 	.slave		= &omap44xx_dss_dispc_hwmod,
+-	.clk		= "l3_div_ck",
++	.clk		= "dss_fck",
+ 	.addr		= omap44xx_dss_dispc_dma_addrs,
+ 	.addr_cnt	= ARRAY_SIZE(omap44xx_dss_dispc_dma_addrs),
+ 	.user		= OCP_USER_SDMA,
+@@ -1280,7 +1280,7 @@  static struct omap_hwmod omap44xx_dss_dispc_hwmod = {
+ 	.mpu_irqs_cnt	= ARRAY_SIZE(omap44xx_dss_dispc_irqs),
+ 	.sdma_reqs	= omap44xx_dss_dispc_sdma_reqs,
+ 	.sdma_reqs_cnt	= ARRAY_SIZE(omap44xx_dss_dispc_sdma_reqs),
+-	.main_clk	= "dss_fck",
++	.main_clk	= "dss_dss_clk",
+ 	.prcm = {
+ 		.omap4 = {
+ 			.clkctrl_reg = OMAP4430_CM_DSS_DSS_CLKCTRL,
+@@ -1336,7 +1336,7 @@  static struct omap_hwmod_addr_space omap44xx_dss_dsi1_dma_addrs[] = {
+ static struct omap_hwmod_ocp_if omap44xx_l3_main_2__dss_dsi1 = {
+ 	.master		= &omap44xx_l3_main_2_hwmod,
+ 	.slave		= &omap44xx_dss_dsi1_hwmod,
+-	.clk		= "l3_div_ck",
++	.clk		= "dss_fck",
+ 	.addr		= omap44xx_dss_dsi1_dma_addrs,
+ 	.addr_cnt	= ARRAY_SIZE(omap44xx_dss_dsi1_dma_addrs),
+ 	.user		= OCP_USER_SDMA,
+@@ -1378,7 +1378,7 @@  static struct omap_hwmod omap44xx_dss_dsi1_hwmod = {
+ 	.mpu_irqs_cnt	= ARRAY_SIZE(omap44xx_dss_dsi1_irqs),
+ 	.sdma_reqs	= omap44xx_dss_dsi1_sdma_reqs,
+ 	.sdma_reqs_cnt	= ARRAY_SIZE(omap44xx_dss_dsi1_sdma_reqs),
+-	.main_clk	= "dss_fck",
++	.main_clk	= "dss_dss_clk",
+ 	.prcm = {
+ 		.omap4 = {
+ 			.clkctrl_reg = OMAP4430_CM_DSS_DSS_CLKCTRL,
+@@ -1413,7 +1413,7 @@  static struct omap_hwmod_addr_space omap44xx_dss_dsi2_dma_addrs[] = {
+ static struct omap_hwmod_ocp_if omap44xx_l3_main_2__dss_dsi2 = {
+ 	.master		= &omap44xx_l3_main_2_hwmod,
+ 	.slave		= &omap44xx_dss_dsi2_hwmod,
+-	.clk		= "l3_div_ck",
++	.clk		= "dss_fck",
+ 	.addr		= omap44xx_dss_dsi2_dma_addrs,
+ 	.addr_cnt	= ARRAY_SIZE(omap44xx_dss_dsi2_dma_addrs),
+ 	.user		= OCP_USER_SDMA,
+@@ -1455,7 +1455,7 @@  static struct omap_hwmod omap44xx_dss_dsi2_hwmod = {
+ 	.mpu_irqs_cnt	= ARRAY_SIZE(omap44xx_dss_dsi2_irqs),
+ 	.sdma_reqs	= omap44xx_dss_dsi2_sdma_reqs,
+ 	.sdma_reqs_cnt	= ARRAY_SIZE(omap44xx_dss_dsi2_sdma_reqs),
+-	.main_clk	= "dss_fck",
++	.main_clk	= "dss_dss_clk",
+ 	.prcm = {
+ 		.omap4 = {
+ 			.clkctrl_reg = OMAP4430_CM_DSS_DSS_CLKCTRL,
+@@ -1510,7 +1510,7 @@  static struct omap_hwmod_addr_space omap44xx_dss_hdmi_dma_addrs[] = {
+ static struct omap_hwmod_ocp_if omap44xx_l3_main_2__dss_hdmi = {
+ 	.master		= &omap44xx_l3_main_2_hwmod,
+ 	.slave		= &omap44xx_dss_hdmi_hwmod,
+-	.clk		= "l3_div_ck",
++	.clk		= "dss_fck",
+ 	.addr		= omap44xx_dss_hdmi_dma_addrs,
+ 	.addr_cnt	= ARRAY_SIZE(omap44xx_dss_hdmi_dma_addrs),
+ 	.user		= OCP_USER_SDMA,
+@@ -1552,7 +1552,7 @@  static struct omap_hwmod omap44xx_dss_hdmi_hwmod = {
+ 	.mpu_irqs_cnt	= ARRAY_SIZE(omap44xx_dss_hdmi_irqs),
+ 	.sdma_reqs	= omap44xx_dss_hdmi_sdma_reqs,
+ 	.sdma_reqs_cnt	= ARRAY_SIZE(omap44xx_dss_hdmi_sdma_reqs),
+-	.main_clk	= "dss_fck",
++	.main_clk	= "dss_dss_clk",
+ 	.prcm = {
+ 		.omap4 = {
+ 			.clkctrl_reg = OMAP4430_CM_DSS_DSS_CLKCTRL,
+@@ -1603,7 +1603,7 @@  static struct omap_hwmod_addr_space omap44xx_dss_rfbi_dma_addrs[] = {
+ static struct omap_hwmod_ocp_if omap44xx_l3_main_2__dss_rfbi = {
+ 	.master		= &omap44xx_l3_main_2_hwmod,
+ 	.slave		= &omap44xx_dss_rfbi_hwmod,
+-	.clk		= "l3_div_ck",
++	.clk		= "dss_fck",
+ 	.addr		= omap44xx_dss_rfbi_dma_addrs,
+ 	.addr_cnt	= ARRAY_SIZE(omap44xx_dss_rfbi_dma_addrs),
+ 	.user		= OCP_USER_SDMA,
+@@ -1642,7 +1642,7 @@  static struct omap_hwmod omap44xx_dss_rfbi_hwmod = {
+ 	.class		= &omap44xx_rfbi_hwmod_class,
+ 	.sdma_reqs	= omap44xx_dss_rfbi_sdma_reqs,
+ 	.sdma_reqs_cnt	= ARRAY_SIZE(omap44xx_dss_rfbi_sdma_reqs),
+-	.main_clk	= "dss_fck",
++	.main_clk	= "dss_dss_clk",
+ 	.prcm = {
+ 		.omap4 = {
+ 			.clkctrl_reg = OMAP4430_CM_DSS_DSS_CLKCTRL,
+@@ -1678,7 +1678,7 @@  static struct omap_hwmod_addr_space omap44xx_dss_venc_dma_addrs[] = {
+ static struct omap_hwmod_ocp_if omap44xx_l3_main_2__dss_venc = {
+ 	.master		= &omap44xx_l3_main_2_hwmod,
+ 	.slave		= &omap44xx_dss_venc_hwmod,
+-	.clk		= "l3_div_ck",
++	.clk		= "dss_fck",
+ 	.addr		= omap44xx_dss_venc_dma_addrs,
+ 	.addr_cnt	= ARRAY_SIZE(omap44xx_dss_venc_dma_addrs),
+ 	.user		= OCP_USER_SDMA,
+@@ -1715,7 +1715,7 @@  static struct omap_hwmod_opt_clk dss_venc_opt_clks[] = {
+ static struct omap_hwmod omap44xx_dss_venc_hwmod = {
+ 	.name		= "dss_venc",
+ 	.class		= &omap44xx_venc_hwmod_class,
+-	.main_clk	= "dss_fck",
++	.main_clk	= "dss_dss_clk",
+ 	.prcm = {
+ 		.omap4 = {
+ 			.clkctrl_reg = OMAP4430_CM_DSS_DSS_CLKCTRL,
+
+

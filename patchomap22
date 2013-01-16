@@ -1,0 +1,10 @@
+diff --git a/arch/arm/mach-omap2/board-4430sdp.c b/arch/arm/mach-omap2/board-4430sdp.c
+index b88f28c..e603b00 100644
+--- a/arch/arm/mach-omap2/board-4430sdp.c
++++ b/arch/arm/mach-omap2/board-4430sdp.c
+ @@ -55,6 +55,9 @@ static int __init omap_l2_cache_init(void)
+  	extern void omap_smc1(u32 fn, u32 arg);
+  	void __iomem *l2cache_base; 
++	if (!cpu_is_omap44xx())
++		return -ENODEV;
+
