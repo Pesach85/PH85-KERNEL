@@ -120,6 +120,8 @@ static inline void pxa_ac97_warm_pxa25x(void)
 
 static inline void pxa_ac97_cold_pxa25x(void)
 {
+        unsigned int timeout;
+
 	GCR &=  GCR_COLD_RST;  /* clear everything but nCRST */
 	GCR &= ~GCR_COLD_RST;  /* then assert nCRST */
 

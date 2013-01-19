@@ -277,7 +277,7 @@ static struct omap_voltdm_pmic omap3_core_pmic = {
 };
 
 static struct omap_voltdm_pmic omap443x_447x_mpu_pmic = {
-	.slew_rate		= 9000,
+	.slew_rate		= 15000,
 	.step_size		= 12660,
 	.on_volt		= 1375000,
 	.onlp_volt		= 1375000,
@@ -306,7 +306,7 @@ static struct omap_voltdm_pmic omap443x_447x_mpu_pmic = {
 };
 
 static struct omap_voltdm_pmic omap443x_446x_iva_pmic = {
-	.slew_rate		= 9000,
+	.slew_rate		= 15000,
 	.step_size		= 12660,
 	.on_volt		= 1188000,
 	.onlp_volt		= 1188000,
@@ -364,7 +364,7 @@ static struct omap_voltdm_pmic omap447x_iva_pmic = {
 };
 
 static struct omap_voltdm_pmic omap443x_core_pmic = {
-	.slew_rate		= 9000,
+	.slew_rate		= 15000,
 	.step_size		= 12660,
 	.on_volt		= 1200000,
 	.onlp_volt		= 1200000,
@@ -377,7 +377,7 @@ static struct omap_voltdm_pmic omap443x_core_pmic = {
 	.vp_vstepmax		= OMAP4_VP_VSTEPMAX_VSTEPMAX,
 // LGE_CHANGE_START [bk.shin@lge.com] 2012-04-25, TI patch :  rename vp_vddmin and vp_vddmax fields
 	.min_volt		= 709000,
-	.max_volt		= 1418000,
+	.max_volt		= 1450000,
 // LGE_CHANGE_END [bk.shin@lge.com] 2012-04-25
 	.vp_timeout_us		= OMAP4_VP_VLIMITTO_TIMEOUT_US,
 	.i2c_slave_addr		= TWL6030_SRI2C_SLAVE_ADDR,
@@ -394,7 +394,7 @@ static struct omap_voltdm_pmic omap443x_core_pmic = {
 
 /* Core uses the MPU rail of 4430 */
 static struct omap_voltdm_pmic omap446x_core_pmic = {
-	.slew_rate		= 9000,
+	.slew_rate		= 15000,
 	.step_size		= 12660,
 	.on_volt		= 1200000,
 	.onlp_volt		= 1200000,
@@ -408,7 +408,7 @@ static struct omap_voltdm_pmic omap446x_core_pmic = {
 	.vp_vstepmax		= OMAP4_VP_VSTEPMAX_VSTEPMAX,
 // LGE_CHANGE_START [bk.shin@lge.com] 2012-04-25, TI patch :  rename vp_vddmin and vp_vddmax fields
 	.min_volt		= 709000,
-	.max_volt		= 1418000,
+	.max_volt		= 1450000,
 // LGE_CHANGE_END [bk.shin@lge.com] 2012-04-25
 	.vp_timeout_us		= OMAP4_VP_VLIMITTO_TIMEOUT_US,
 	.i2c_slave_addr		= TWL6030_SRI2C_SLAVE_ADDR,
@@ -424,7 +424,7 @@ static struct omap_voltdm_pmic omap446x_core_pmic = {
 };
 
 static struct omap_voltdm_pmic omap447x_core_pmic = {
-	.slew_rate		= 9000,
+	.slew_rate		= 15000,
 	.step_size		= 12660,
 	.on_volt		= 1200000,
 	.onlp_volt		= 1200000,
@@ -437,7 +437,7 @@ static struct omap_voltdm_pmic omap447x_core_pmic = {
 	.vp_vstepmax		= OMAP4_VP_VSTEPMAX_VSTEPMAX,
 // LGE_CHANGE_START [bk.shin@lge.com] 2012-04-25,  TI patch : rename vp_vddmin and vp_vddmax fields
 	.min_volt		= 709000,
-	.max_volt		= 1418000,
+	.max_volt		= 1450000,
 // LGE_CHANGE_END [bk.shin@lge.com] 2012-04-25
 	.vp_timeout_us		= OMAP4_VP_VLIMITTO_TIMEOUT_US,
 	.i2c_slave_addr		= TWL6032_SRI2C_SLAVE_ADDR,

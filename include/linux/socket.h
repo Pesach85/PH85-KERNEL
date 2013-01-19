@@ -8,8 +8,10 @@
 #define _K_SS_ALIGNSIZE	(__alignof__ (struct sockaddr *))
 				/* Implementation specific desired alignment */
 
+typedef unsigned short __kernel_sa_family_t;
+
 struct __kernel_sockaddr_storage {
-	unsigned short	ss_family;		/* address family */
+	__kernel_sa_family_t	ss_family;		/* address family */
 	/* Following field(s) are implementation specific */
 	char		__data[_K_SS_MAXSIZE - sizeof(unsigned short)];
 				/* space to achieve desired size, */
@@ -35,7 +37,7 @@ struct seq_file;
 extern void socket_seq_show(struct seq_file *seq);
 #endif
 
-typedef unsigned short	sa_family_t;
+typedef __kernel_sa_family_t	sa_family_t;
 
 /*
  *	1003.1g requires sa_family_t and that sa_data is char.
@@ -261,7 +263,7 @@ struct ucred {
 #define MSG_NOSIGNAL	0x4000	/* Do not generate SIGPIPE */
 #define MSG_MORE	0x8000	/* Sender will send more */
 #define MSG_WAITFORONE	0x10000	/* recvmmsg(): block until 1+ packets avail */
-
+#define MSG_SENDPAGE_NOTLAST 0x20000 /* sendpage() internal : not the last page */
 #define MSG_EOF         MSG_FIN
 
 #define MSG_CMSG_CLOEXEC 0x40000000	/* Set close_on_exit for file
