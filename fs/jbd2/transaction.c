@@ -178,8 +178,12 @@ repeat:
 		if (!new_transaction)
 			goto alloc_transaction;
 		write_lock(&journal->j_state_lock);
+<<<<<<< HEAD
 		if (!journal->j_running_transaction &&
                                 !journal->j_barrier_count) {
+=======
+		if (!journal->j_running_transaction) {
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 			jbd2_get_transaction(journal, new_transaction);
 			new_transaction = NULL;
 		}

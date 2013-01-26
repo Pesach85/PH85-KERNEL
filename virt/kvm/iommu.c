@@ -285,11 +285,14 @@ static void kvm_iommu_put_pages(struct kvm *kvm,
 	}
 }
 
+<<<<<<< HEAD
 void kvm_iommu_unmap_pages(struct kvm *kvm, struct kvm_memory_slot *slot)
 {
   kvm_iommu_put_pages(kvm, slot->base_gfn, slot->npages);
 }
 
+=======
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 static int kvm_iommu_unmap_memslots(struct kvm *kvm)
 {
 	int i, idx;
@@ -298,9 +301,16 @@ static int kvm_iommu_unmap_memslots(struct kvm *kvm)
 	idx = srcu_read_lock(&kvm->srcu);
 	slots = kvm_memslots(kvm);
 
+<<<<<<< HEAD
 	for (i = 0; i < slots->nmemslots; i++)
           kvm_iommu_unmap_pages(kvm, &slots->memslots[i]);
 	
+=======
+	for (i = 0; i < slots->nmemslots; i++) {
+		kvm_iommu_put_pages(kvm, slots->memslots[i].base_gfn,
+				    slots->memslots[i].npages);
+	}
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	srcu_read_unlock(&kvm->srcu, idx);
 
 	return 0;

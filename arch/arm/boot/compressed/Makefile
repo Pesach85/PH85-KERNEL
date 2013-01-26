@@ -4,11 +4,15 @@
 # create a compressed vmlinuz image from the original vmlinux
 #
 
+<<<<<<< HEAD
 # Check GCC version
 GCCVERSION  := $(shell $(CC) --version | grep ^gcc | sed 's/^.* //g' | cut -c1-3)
 
 OBJS		=
 plus_sec := $(call as-instr,.arch_extension sec,+sec)
+=======
+OBJS		=
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 # Ensure that mmcif loader code appears early in the image
 # to minimise that number of bocks that have to be read in
@@ -19,6 +23,7 @@ OBJS		+= mmcif-sh7372.o
 endif
 endif
 
+<<<<<<< HEAD
 AFLAGS_head.o := -DTEXT_OFFSET=$(TEXT_OFFSET)
 AFLAGS_head.o += -Wa,-march=armv7-a$(plus_sec)
 AFLAGS_head.o += -Wa,-mcpu=cortex-a9
@@ -36,11 +41,17 @@ DECOMPRESS = decompress.o
 ifeq ($(CONFIG_CRYPTO_FIPS),y)
 AFLAGS_head.o += -DFIPS_KERNEL_RAM_BASE=0x40008000
 endif
+=======
+AFLAGS_head.o += -DTEXT_OFFSET=$(TEXT_OFFSET)
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 HEAD	= head.o
 OBJS	+= misc.o decompress.o
 FONTC	= $(srctree)/drivers/video/console/font_acorn_8x8.c
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 #
 # Architecture dependencies
 #
@@ -100,6 +111,7 @@ endif
 
 SEDFLAGS	= s/TEXT_START/$(ZTEXTADDR)/;s/BSS_START/$(ZBSSADDR)/
 
+<<<<<<< HEAD
 suffix_$(CONFIG_KERNEL_GZIP) := gzip
 suffix_$(CONFIG_KERNEL_LZO)  := lzo
 suffix_$(CONFIG_KERNEL_LZMA) := lzma
@@ -111,18 +123,36 @@ targets := vmlinux vmlinux.lds \
 
 # Make sure files are removed during clean
 extra-y       += piggy.gzip piggy.lzo piggy.lzma piggy.xzkern lib1funcs.S ashldi3.S
+=======
+suffix_$(CONFIG_KERNEL_GZIP) = gzip
+suffix_$(CONFIG_KERNEL_LZO)  = lzo
+suffix_$(CONFIG_KERNEL_LZMA) = lzma
+
+targets       := vmlinux vmlinux.lds \
+		 piggy.$(suffix_y) piggy.$(suffix_y).o \
+		 font.o font.c head.o misc.o $(OBJS)
+
+# Make sure files are removed during clean
+extra-y       += piggy.gzip piggy.lzo piggy.lzma lib1funcs.S
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 ifeq ($(CONFIG_FUNCTION_TRACER),y)
 ORIG_CFLAGS := $(KBUILD_CFLAGS)
 KBUILD_CFLAGS = $(subst -pg, , $(ORIG_CFLAGS))
 endif
 
+<<<<<<< HEAD
 ccflags-y := -fpic -fno-builtin -I$(obj)
 asflags-y := -Wa,-march=all
 
 # Supply kernel BSS size to the decompressor via a linker symbol.
 KBSS_SZ = $(shell size $(obj)/../../../../vmlinux | awk 'END{print $$3}')
 LDFLAGS_vmlinux = --defsym _kernel_bss_size=$(KBSS_SZ)
+=======
+ccflags-y := -fpic -fno-builtin
+asflags-y := -Wa,-march=all
+
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 # Supply ZRELADDR to the decompressor via a linker symbol.
 ifneq ($(CONFIG_AUTO_ZRELADDR),y)
 LDFLAGS_vmlinux += --defsym zreladdr=$(ZRELADDR)
@@ -140,6 +170,7 @@ LDFLAGS_vmlinux += -X
 LDFLAGS_vmlinux += -T
 
 # For __aeabi_uidivmod
+<<<<<<< HEAD
 AFLAGS_lib1funcs.o +=-Wa,-march=armv7-a$(plus_sec)
 AFLAGS_lib1funcs.o += -Wa,-mcpu=cortex-a9
 lib1funcs = $(obj)/lib1funcs.o
@@ -152,6 +183,11 @@ AFLAGS_ashldi3.o +=-Wa,-march=armv7-a$(plus_sec)
 ashldi3 = $(obj)/ashldi3.o
 
 $(obj)/ashldi3.S: $(srctree)/arch/$(SRCARCH)/lib/ashldi3.S FORCE
+=======
+lib1funcs = $(obj)/lib1funcs.o
+
+$(obj)/lib1funcs.S: $(srctree)/arch/$(SRCARCH)/lib/lib1funcs.S FORCE
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	$(call cmd,shipped)
 
 # We need to prevent any GOTOFF relocs being used with references
@@ -167,16 +203,24 @@ bad_syms=$$($(CROSS_COMPILE)nm $@ | sed -n 's/^.\{8\} [bc] \(.*\)/\1/p') && \
   ( echo "following symbols must have non local/private scope:" >&2; \
     echo "$$bad_syms" >&2; rm -f $@; false )
 
+<<<<<<< HEAD
 $(obj)/vmlinux: $(obj)/vmlinux.lds $(obj)/$(HEAD) $(obj)/$(MISC) $(obj)/$(DECOMPRESS) $(obj)/piggy.$(suffix_y).o \
         $(addprefix $(obj)/, $(OBJS)) $(lib1funcs) $(ashldi3) FORCE
+=======
+$(obj)/vmlinux: $(obj)/vmlinux.lds $(obj)/$(HEAD) $(obj)/piggy.$(suffix_y).o \
+	 	$(addprefix $(obj)/, $(OBJS)) $(lib1funcs) FORCE
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	$(call if_changed,ld)
 	@$(check_for_bad_syms)
 
 $(obj)/piggy.$(suffix_y): $(obj)/../Image FORCE
 	$(call if_changed,$(suffix_y))
 
+<<<<<<< HEAD
 AFLAGS_piggy.$(suffix_y).o += -Wa,-march=armv7-a$(plus_sec)
 AFLAGS_piggy.$(suffix_y).o += -Wa,-mcpu=cortex-a9
+=======
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 $(obj)/piggy.$(suffix_y).o:  $(obj)/piggy.$(suffix_y) FORCE
 
 CFLAGS_font.o := -Dstatic=
@@ -186,4 +230,7 @@ $(obj)/font.c: $(FONTC)
 
 $(obj)/vmlinux.lds: $(obj)/vmlinux.lds.in arch/arm/boot/Makefile $(KCONFIG_CONFIG)
 	@sed "$(SEDFLAGS)" < $< > $@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366

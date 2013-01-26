@@ -608,6 +608,7 @@ config SOUND_CONTROL
         help
           Enable support for Sound Control
 
+<<<<<<< HEAD
 config LIVE_OC
         bool "Support For Live OC"
         default y
@@ -620,4 +621,6 @@ config CUSTOM_VOLTAGE
 	help
 	  Say Y here to enable Custom Voltage
 
+=======
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 endif # MISC_DEVICES

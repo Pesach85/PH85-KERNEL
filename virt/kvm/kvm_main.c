@@ -796,13 +796,21 @@ skip_lpage:
 	if (r)
 		goto out_free;
 
+<<<<<<< HEAD
 	/* map/unmap the pages in iommu page table */
+=======
+	/* map the pages in iommu page table */
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	if (npages) {
 		r = kvm_iommu_map_pages(kvm, &new);
 		if (r)
 			goto out_free;
+<<<<<<< HEAD
 	} else
           kvm_iommu_unmap_pages(kvm, &old);
+=======
+	}
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 	r = -ENOMEM;
 	slots = kzalloc(sizeof(struct kvm_memslots), GFP_KERNEL);

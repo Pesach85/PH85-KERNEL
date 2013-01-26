@@ -73,6 +73,7 @@ return q->elevator->elevator_data;
 static void
 vr_add_rq_rb(struct vr_data *vd, struct request *rq)
 {
+<<<<<<< HEAD
 //struct request *alias = elv_rb_add(&vd->sort_list, rq);
 //
 //if (unlikely(alias)) {
@@ -81,6 +82,11 @@ vr_add_rq_rb(struct vr_data *vd, struct request *rq)
 //BUG_ON(alias);
 //}
 elv_rb_add(&vd->sort_list, rq);
+=======
+
+elv_rb_add(&vd->sort_list, rq);
+
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 if (blk_rq_pos(rq) >= vd->last_sector) {
 if (!vd->next_rq || blk_rq_pos(vd->next_rq) > blk_rq_pos(rq))
 vd->next_rq = rq;
@@ -449,3 +455,8 @@ module_exit(vr_exit);
 MODULE_AUTHOR("Aaron Carroll");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("V(R) IO scheduler");
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366

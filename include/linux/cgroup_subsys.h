@@ -64,9 +64,12 @@ SUBSYS(perf)
 #endif
 
 /* */
+<<<<<<< HEAD
 
 #ifdef CONFIG_CGROUP_BFQIO
 SUBSYS(bfqio)
 #endif
 
 /* */
+=======
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366

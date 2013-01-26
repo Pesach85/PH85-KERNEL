@@ -49,6 +49,7 @@ struct rnd_state {
 #ifdef __KERNEL__
 
 extern void rand_initialize_irq(int irq);
+<<<<<<< HEAD
  
 extern void add_input_randomness(unsigned int type, unsigned int code,
                                   unsigned int value);
@@ -69,6 +70,15 @@ extern void add_interrupt_randomness(int irq, int irq_flags);
 extern void get_random_bytes(void *buf, int nbytes);
 extern void get_random_bytes_arch(void *buf, int nbytes);
 void generate_random_uuid(unsigned char uuid_out[16]); */
+=======
+
+extern void add_input_randomness(unsigned int type, unsigned int code,
+				 unsigned int value);
+extern void add_interrupt_randomness(int irq);
+
+extern void get_random_bytes(void *buf, int nbytes);
+void generate_random_uuid(unsigned char uuid_out[16]);
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 #ifndef MODULE
 extern const struct file_operations random_fops, urandom_fops;
@@ -104,6 +114,7 @@ static inline void prandom32_seed(struct rnd_state *state, u64 seed)
 	state->s3 = __seed(i, 15);
 }
 
+<<<<<<< HEAD
 #ifdef CONFIG_ARCH_RANDOM
 # include <asm/archrandom.h>
 #else
@@ -117,6 +128,8 @@ static inline int arch_get_random_int(unsigned int *v)
 }
 #endif
 
+=======
+>>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 #endif /* __KERNEL___ */
 
 #endif /* _LINUX_RANDOM_H */
