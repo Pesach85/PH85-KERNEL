@@ -117,11 +117,7 @@ irqreturn_t
 handle_irq_event_percpu(struct irq_desc *desc, struct irqaction *action)
 {
 	irqreturn_t retval = IRQ_NONE;
-<<<<<<< HEAD
 	unsigned int flags = 0, irq = desc->irq_data.irq;
-=======
-	unsigned int random = 0, irq = desc->irq_data.irq;
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 	do {
 		irqreturn_t res;
@@ -149,11 +145,7 @@ handle_irq_event_percpu(struct irq_desc *desc, struct irqaction *action)
 
 			/* Fall through to add to randomness */
 		case IRQ_HANDLED:
-<<<<<<< HEAD
 			flags |= action->flags;
-=======
-			random |= action->flags;
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 			break;
 
 		default:
@@ -164,11 +156,7 @@ handle_irq_event_percpu(struct irq_desc *desc, struct irqaction *action)
 		action = action->next;
 	} while (action);
 
-<<<<<<< HEAD
 	if (flags & IRQF_SAMPLE_RANDOM)
-=======
-	if (random & IRQF_SAMPLE_RANDOM)
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 		add_interrupt_randomness(irq);
 
 	if (!noirqdebug)

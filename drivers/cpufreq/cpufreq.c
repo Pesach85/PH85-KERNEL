@@ -553,7 +553,6 @@ static ssize_t show_scaling_setspeed(struct cpufreq_policy *policy, char *buf)
 	return policy->governor->show_setspeed(policy, buf);
 }
 
-<<<<<<< HEAD
 static ssize_t show_boost_cpufreq(struct cpufreq_policy *policy, char *buf)
 {
 	if (!policy->governor || !policy->governor->boost_cpu_freq)
@@ -580,8 +579,6 @@ static ssize_t store_boost_cpufreq(struct cpufreq_policy *policy,
 
 	return count;
 }
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 
 /**
@@ -613,10 +610,7 @@ cpufreq_freq_attr_rw(scaling_min_freq);
 cpufreq_freq_attr_rw(scaling_max_freq);
 cpufreq_freq_attr_rw(scaling_governor);
 cpufreq_freq_attr_rw(scaling_setspeed);
-<<<<<<< HEAD
 cpufreq_freq_attr_rw(boost_cpufreq);
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 static struct attribute *default_attrs[] = {
 	&cpuinfo_min_freq.attr,
@@ -630,10 +624,7 @@ static struct attribute *default_attrs[] = {
 	&scaling_driver.attr,
 	&scaling_available_governors.attr,
 	&scaling_setspeed.attr,
-<<<<<<< HEAD
 	&boost_cpufreq.attr,
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	NULL
 };
 
@@ -1238,27 +1229,6 @@ unsigned int cpufreq_quick_get(unsigned int cpu)
 }
 EXPORT_SYMBOL(cpufreq_quick_get);
 
-<<<<<<< HEAD
-=======
-/**
- * cpufreq_quick_get_max - get the max reported CPU frequency for this CPU
- * @cpu: CPU number
- *
- * Just return the max possible frequency for a given CPU.
- */
-unsigned int cpufreq_quick_get_max(unsigned int cpu)
-{
-  struct cpufreq_policy *policy = cpufreq_cpu_get(cpu);
-  unsigned int ret_freq = 0;
-  if (policy) {
-    ret_freq = policy->max;
-    cpufreq_cpu_put(policy);
-  }
-  return ret_freq;
-}
-EXPORT_SYMBOL(cpufreq_quick_get_max);
-
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 static unsigned int __cpufreq_get(unsigned int cpu)
 {

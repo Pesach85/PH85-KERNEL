@@ -6,24 +6,15 @@
 #include <linux/cpumask.h>
 
 struct cputopo_arm {
-<<<<<<< HEAD
 	int thread_id;
 	int core_id;
 	int socket_id;
 	cpumask_t thread_sibling;
 	cpumask_t core_sibling;
-=======
-int thread_id;
-int core_id;
-int socket_id;
-cpumask_t thread_sibling;
-cpumask_t core_sibling;
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 };
 
 extern struct cputopo_arm cpu_topology[NR_CPUS];
 
-<<<<<<< HEAD
 #define topology_physical_package_id(cpu)	(cpu_topology[cpu].socket_id)
 #define topology_core_id(cpu)		(cpu_topology[cpu].core_id)
 #define topology_core_cpumask(cpu)	(&cpu_topology[cpu].core_sibling)
@@ -35,19 +26,6 @@ extern struct cputopo_arm cpu_topology[NR_CPUS];
 void init_cpu_topology(void);
 void store_cpu_topology(unsigned int cpuid);
 const struct cpumask *cpu_coregroup_mask(int cpu);
-=======
-#define topology_physical_package_id(cpu) (cpu_topology[cpu].socket_id)
-#define topology_core_id(cpu) (cpu_topology[cpu].core_id)
-#define topology_core_cpumask(cpu) (&cpu_topology[cpu].core_sibling)
-#define topology_thread_cpumask(cpu) (&cpu_topology[cpu].thread_sibling)
-
-#define mc_capable() (cpu_topology[0].socket_id != -1)
-#define smt_capable() (cpu_topology[0].thread_id != -1)
-
-void init_cpu_topology(void);
-void store_cpu_topology(unsigned int cpuid);
-const struct cpumask *cpu_coregroup_mask(unsigned int cpu);
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 #else
 
@@ -56,7 +34,6 @@ static inline void store_cpu_topology(unsigned int cpuid) { }
 
 #endif
 
-<<<<<<< HEAD
 /* Common values for CPUs */
 #ifndef SD_CPU_INIT
 #define SD_CPU_INIT (struct sched_domain) {				\
@@ -90,8 +67,6 @@ static inline void store_cpu_topology(unsigned int cpuid) { }
 }
 #endif
 
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 #include <asm-generic/topology.h>
 
 #endif /* _ASM_ARM_TOPOLOGY_H */

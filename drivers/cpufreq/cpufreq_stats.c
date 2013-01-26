@@ -252,13 +252,10 @@ static int cpufreq_stats_create_table(struct cpufreq_policy *policy,
 	spin_lock(&cpufreq_stats_lock);
 	stat->last_time = get_jiffies_64();
 	stat->last_index = freq_table_get_index(stat, policy->cur);
-<<<<<<< HEAD
 #ifdef CONFIG_LIVE_OC
 	if (stat->last_index == -1)
 	    stat->last_index = 0;
 #endif
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	spin_unlock(&cpufreq_stats_lock);
 	cpufreq_cpu_put(data);
 	return 0;
@@ -424,7 +421,6 @@ static void __exit cpufreq_stats_exit(void)
 		cpufreq_stats_free_sysfs(cpu);
 	}
 }
-<<<<<<< HEAD
 #ifdef CONFIG_LIVE_OC
 void cpufreq_stats_reset(void)
 {
@@ -454,8 +450,6 @@ void cpufreq_stats_reset(void)
 }
 EXPORT_SYMBOL(cpufreq_stats_reset);
 #endif
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 MODULE_AUTHOR("Zou Nan hai <nanhai.zou@intel.com>");
 MODULE_DESCRIPTION("'cpufreq_stats' - A driver to export cpufreq stats "

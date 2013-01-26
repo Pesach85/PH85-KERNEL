@@ -155,11 +155,7 @@ static __init int omap4_ldo_trim_init(void)
 	 */
 #ifdef CONFIG_MACH_LGE_IFF
 	/* If not already trimmed, use s/w override */
-<<<<<<< HEAD
 	if (system_rev > 1 && cpu_is_omap446x())
-=======
-	if (system_rev > 2 && cpu_is_omap446x())
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 		omap4460_mpu_dpll_trim_override();
 #else
 	/* If not already trimmed, use s/w override */

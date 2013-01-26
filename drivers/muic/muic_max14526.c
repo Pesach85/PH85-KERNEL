@@ -183,7 +183,7 @@ int muic_set_mhl_mode(struct muic_client_device *mcdev)// (struct i2c_client *cl
 #endif
 	//muic_i2c_write_byte(SW_CONTROL, COMP2_TO_DP2 | COMN1_TO_DN1);
 	muic_i2c_write_byte(client, SW_CONTROL, DP_UART | DM_UART);
-
+}
   	/* Enable 200K, Charger Pump, and ADC (0x01=0x13) */
 	//muic_i2c_write_byte(CONTROL_1, ID_200 | SEMREN | CP_EN);
 #if 0
@@ -191,7 +191,6 @@ int muic_set_mhl_mode(struct muic_client_device *mcdev)// (struct i2c_client *cl
 #endif
 
 //	muic_set_mode(MUIC_MHL);
-}
 
 int muic_set_cp_usb_mode(struct muic_client_device *mcdev)// (struct i2c_client *client)
 {
@@ -462,7 +461,7 @@ int muic_set_device_none_detect(struct i2c_client *client,unsigned char int_stat
 		else if(id_register_value == IDNO_0101)/*180k + VBUS LG proprietary TA Detected*/
 		{
 			//muic_set_mode(MUIC_LG_TA);
-			muic_set_mode(MUIC_AP_USB);//lg usb calble의 int_stat_value =0x15 로 동작되어, 일반 usb cable로 수정 함.
+			muic_set_mode(MUIC_AP_USB);//lg usb calble\C0\C7 int_stat_value =0x15 \B7\CE \B5\BF\C0滂퓸\EE, \C0球\DD usb cable\B7\CE \BC\F6\C1\A4 \C7\D4.
 		}
 		else// if(charger_value & CHPORT)
 		{
@@ -475,7 +474,7 @@ int muic_set_device_none_detect(struct i2c_client *client,unsigned char int_stat
 			dev_info(&client->dev, "muic: charger_value :0x%x\n",charger_value);
 			//muic_set_charger_mode(client, charger_value);
 
-			//else if( (stat_value & CHGDET)&&((id_register_value & IDNO) == IDNO_1011))//stat_value==0x9B 일반 충전기
+			//else if( (stat_value & CHGDET)&&((id_register_value & IDNO) == IDNO_1011))//stat_value==0x9B \C0球\DD \C3\E6\C0\FC\B1\E2
 			if(int_stat_value & CHGDET)
 			{
 				muic_i2c_write_byte(client,SW_CONTROL, COMP2_TO_HZ | COMN1_TO_HZ);
@@ -499,7 +498,7 @@ int muic_set_device_none_detect(struct i2c_client *client,unsigned char int_stat
 				//muic_path = MUIC_LG_TA;
 				//charging_mode = CHARGING_LG_TA;
 			}
-			else //stat_value==0x1B 일반 UBS케이블
+			else //stat_value==0x1B \C0球\DD UBS\C4\C9\C0遣\ED
 			{
 				//set_max14526_ap_usb_mode();
 				muic_set_mode(MUIC_AP_USB);
@@ -741,7 +740,7 @@ static int __init muic_state(char *str)
 __setup("muic_state=", muic_state);/* LGE_CHANGE_E [kenneth.kang@lge.com] 2011-07-26, CP retain mode */
 
 /*mo2seongjae.jang@lge.com 20120813
-bootable\bootloader\lk\dev\muic\muic.c muic_init 함수에서 cmdline으로 처리된 함수.
+bootable\bootloader\lk\dev\muic\muic.c muic_init \C7獨\F6\BF\A1\BC\AD cmdline\C0\B8\B7\CE 처\B8\AE\B5\C8 \C7獨\F6.
 */
 static int __init muic_int_stat(char *str)
 {

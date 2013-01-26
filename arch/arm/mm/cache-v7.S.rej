@@ -1,8 +1,0 @@
---- arch/arm/mm/cache-v7.S
-+++ arch/arm/mm/cache-v7.S
-@@ -387,4 +428,4 @@
- 	__INITDATA
- 
- 	@ define struct cpu_cache_fns (see <asm/cacheflush.h> and proc-macros.S)
--	define_cache_functions v7
-+	define_cache_functions v7, cachelevel=1

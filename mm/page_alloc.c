@@ -5365,11 +5365,7 @@ __setup("hashdist=", set_hashdist);
  *   quantity of entries
  * - limit is the number of hash buckets, not the total allocation size
  */
-<<<<<<< HEAD
  void *__init alloc_large_system_hash(const char *tablename,
-=======
-void *__init alloc_large_system_hash(const char *tablename,
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 				     unsigned long bucketsize,
 				     unsigned long numentries,
 				     int scale,

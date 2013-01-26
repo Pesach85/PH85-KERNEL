@@ -6,19 +6,11 @@
  *
  * Smart reflex class 1.5 is also called periodic SW Calibration
  * Some of the highlights are as follows:
-<<<<<<< HEAD
  * â€“ Host CPU triggers OPP calibration when transitioning to non calibrated
  *   OPP
  * â€“ SR-AVS + VP modules are used to perform calibration
  * â€“ Once completed, the SmartReflex-AVS module can be disabled
  * â€“ Enables savings based on process, supply DC accuracy and aging
-=======
- * – Host CPU triggers OPP calibration when transitioning to non calibrated
- *   OPP
- * – SR-AVS + VP modules are used to perform calibration
- * – Once completed, the SmartReflex-AVS module can be disabled
- * – Enables savings based on process, supply DC accuracy and aging
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -34,10 +26,6 @@
 #include <linux/workqueue.h>
 #include <linux/slab.h>
 #include <linux/opp.h>
-<<<<<<< HEAD
-=======
-#include <linux/pm_qos_params.h>
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 #include "smartreflex.h"
 #include "voltage.h"
@@ -65,10 +53,6 @@
  *			case oscillations. filled by the notifier and
  *			consumed by the work item.
  * @work_active:	have we scheduled a work item?
-<<<<<<< HEAD
-=======
- * @qos:		pm qos handle
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
  */
 struct sr_class1p5_work_data {
 	struct delayed_work work;
@@ -78,10 +62,6 @@ struct sr_class1p5_work_data {
 	u8 num_osc_samples;
 	unsigned long u_volt_samples[SR1P5_STABLE_SAMPLES];
 	bool work_active;
-<<<<<<< HEAD
-=======
-	struct pm_qos_request_list qos;
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 };
 
 #if CONFIG_OMAP_SR_CLASS1P5_RECALIBRATION_DELAY
@@ -187,11 +167,6 @@ static void sr_class1p5_calib_work(struct work_struct *work)
 	if (unlikely(!work_data->work_active)) {
 		pr_err("%s:%s unplanned work invocation!\n", __func__,
 		       voltdm->name);
-<<<<<<< HEAD
-=======
-		/* No expectation of calibration, remove qos req */
-		pm_qos_update_request(&work_data->qos, PM_QOS_DEFAULT_VALUE);
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 		mutex_unlock(&omap_dvfs_lock);
 		return;
 	}
@@ -313,11 +288,7 @@ done_calib:
 
 		u_volt_safe += u_volt_margin;
 	}
-<<<<<<< HEAD
 
-=======
-	/* just warn, dont clamp down on voltage */
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	if (u_volt_safe > volt_data->volt_nominal) {
 		pr_warning("%s: %s Vsafe %ld > Vnom %d. %ld[%d] margin on"
 			"vnom %d curr_v=%ld\n", __func__, voltdm->name,
@@ -340,13 +311,8 @@ done_calib:
 		voltdm_scale(voltdm, volt_data);
 	}
 
-<<<<<<< HEAD
 	pr_info("%s: %s: Calibration complete: Voltage:Nominal=%d,"
 		"Calib=%d,margin=%d\n",
-=======
-	pr_info("%s: %s: Calibration complete: Voltage Nominal=%d"
-		"Calib=%d margin=%d\n",
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 		 __func__, voltdm->name, volt_data->volt_nominal,
 		 volt_data->volt_calibrated, volt_data->volt_margin);
 	/*
@@ -357,11 +323,6 @@ done_calib:
 	 * vc_setup_on_voltage(voltdm, volt_data->volt_calibrated);
 	 */
 	work_data->work_active = false;
-<<<<<<< HEAD
-=======
-	/* Calibration done, Remove qos req */
-	pm_qos_update_request(&work_data->qos, PM_QOS_DEFAULT_VALUE);
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	mutex_unlock(&omap_dvfs_lock);
 }
 
@@ -476,11 +437,6 @@ static int sr_class1p5_enable(struct voltagedomain *voltdm,
 	work_data->vdata = volt_data;
 	work_data->work_active = true;
 	work_data->num_calib_triggers = 0;
-<<<<<<< HEAD
-=======
-	/* Dont interrupt me untill calibration is complete */
-	pm_qos_update_request(&work_data->qos, 0);
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	/* program the workqueue and leave it to calibrate offline.. */
 	schedule_delayed_work(&work_data->work,
 			      msecs_to_jiffies(SR1P5_SAMPLING_DELAY_MS *
@@ -549,11 +505,6 @@ static int sr_class1p5_disable(struct voltagedomain *voltdm,
 		sr_disable_errgen(voltdm);
 		omap_vp_disable(voltdm);
 		sr_disable(voltdm);
-<<<<<<< HEAD
-=======
-		/* Cancelled SR, so no more need to keep request */
-		pm_qos_update_request(&work_data->qos, PM_QOS_DEFAULT_VALUE);
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	}
 
 	/* If already calibrated, don't need to reset voltage */
@@ -621,11 +572,6 @@ static int sr_class1p5_init(struct voltagedomain *voltdm,
 	work_data->voltdm = voltdm;
 	INIT_DELAYED_WORK_DEFERRABLE(&work_data->work, sr_class1p5_calib_work);
 	*voltdm_cdata = (void *)work_data;
-<<<<<<< HEAD
-=======
-	pm_qos_add_request(&work_data->qos, PM_QOS_CPU_DMA_LATENCY,
-			  PM_QOS_DEFAULT_VALUE);
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 	return 0;
 }
@@ -674,10 +620,6 @@ static int sr_class1p5_deinit(struct voltagedomain *voltdm,
 	cancel_delayed_work_sync(&work_data->work);
 	omap_voltage_calib_reset(voltdm);
 	voltdm_reset(voltdm);
-<<<<<<< HEAD
-=======
-	pm_qos_remove_request(&work_data->qos);
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 	*voltdm_cdata = NULL;
 	kfree(work_data);

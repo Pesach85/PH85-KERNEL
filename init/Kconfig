@@ -399,7 +399,6 @@ config TREE_PREEMPT_RCU
 	  is also required.  It also scales down nicely to
 	  smaller systems.
 
-<<<<<<< HEAD
 config JRCU
         bool "An RCU suitable for small SMP systems"
         depends on PREEMPT
@@ -416,8 +415,6 @@ config JRCU
           but one CPU from interference by this periodic requirement.
           Most users should say N here.
 
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 config TINY_RCU
 	bool "UP-only small-memory-footprint RCU"
 	depends on !SMP
@@ -443,7 +440,6 @@ config PREEMPT_RCU
 	  This option enables preemptible-RCU code that is common between
 	  the TREE_PREEMPT_RCU and TINY_PREEMPT_RCU implementations.
 
-<<<<<<< HEAD
 config JRCU_DAEMON
        bool
        depends on JRCU
@@ -495,8 +491,6 @@ config PREEMPT_COUNT_CPU
          so this option should be selected only if other kernel features
          that use preempt_count_cpu() are also selected.
 
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 config RCU_TRACE
 	bool "Enable tracing for RCU"
 	help

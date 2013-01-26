@@ -26,13 +26,10 @@
 #include "omap_opp_data.h"
 #include "dvfs.h"
 
-<<<<<<< HEAD
 #ifdef CONFIG_LIVE_OC
 #include <linux/live_oc.h>
 #endif
 
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 /* Temp variable to allow multiple calls */
 static u8 __initdata omap_table_init;
 
@@ -118,12 +115,9 @@ int __init omap_init_opp_table(struct omap_opp_def *opp_def,
 			if (r)
 				dev_err(dev, "%s:%s:err dvfs register %d %d\n",
 					__func__, opp_def->hwmod_name, r, i);
-<<<<<<< HEAD
 #ifdef CONFIG_LIVE_OC
 liveoc_register_oppdevice(dev, opp_def->hwmod_name);
 #endif
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 		}
 next:
 		opp_def++;

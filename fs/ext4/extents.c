@@ -2138,22 +2138,14 @@ ext4_ext_in_cache(struct inode *inode, ext4_lblk_t block,
  * last index in the block only.
  */
 static int ext4_ext_rm_idx(handle_t *handle, struct inode *inode,
-<<<<<<< HEAD
 			struct ext4_ext_path *path, int depth)
-=======
-			struct ext4_ext_path *path)
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 {
 	int err;
 	ext4_fsblk_t leaf;
 
 	/* free index block */
-<<<<<<< HEAD
 	depth--;
         path = path + depth;
-=======
-	path--;
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	leaf = ext4_idx_pblock(path->p_idx);
 	if (unlikely(path->p_hdr->eh_entries == 0)) {
 		EXT4_ERROR_INODE(inode, "path->p_hdr->eh_entries == 0");
@@ -2169,7 +2161,6 @@ static int ext4_ext_rm_idx(handle_t *handle, struct inode *inode,
 	ext_debug("index is empty, remove it, free block %llu\n", leaf);
 	ext4_free_blocks(handle, inode, NULL, leaf, 1,
 			 EXT4_FREE_BLOCKS_METADATA | EXT4_FREE_BLOCKS_FORGET);
-<<<<<<< HEAD
         while (--depth >= 0) {
           if (path->p_idx != EXT_FIRST_INDEX(path->p_hdr))
             break;
@@ -2182,8 +2173,6 @@ static int ext4_ext_rm_idx(handle_t *handle, struct inode *inode,
         if (err)
           break;
         }
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	return err;
 }
 
@@ -2531,11 +2520,7 @@ ext4_ext_rm_leaf(handle_t *handle, struct inode *inode,
 	/* if this leaf is free, then we should
 	 * remove it from index block above */
 	if (err == 0 && eh->eh_entries == 0 && path[depth].p_bh != NULL)
-<<<<<<< HEAD
 		err = ext4_ext_rm_idx(handle, inode, path, depth);
-=======
-		err = ext4_ext_rm_idx(handle, inode, path + depth);
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 out:
 	return err;
@@ -2665,11 +2650,7 @@ again:
 				/* index is empty, remove it;
 				 * handle must be already prepared by the
 				 * truncatei_leaf() */
-<<<<<<< HEAD
 				err = ext4_ext_rm_idx(handle, inode, path, i);
-=======
-				err = ext4_ext_rm_idx(handle, inode, path + i);
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 			}
 			/* root level has p_bh == NULL, brelse() eats this */
 			brelse(path[i].p_bh);

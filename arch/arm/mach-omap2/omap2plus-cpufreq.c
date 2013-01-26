@@ -45,13 +45,10 @@
 #include "dvfs.h"
 #include "smartreflex.h"
 
-<<<<<<< HEAD
 #ifdef CONFIG_LIVE_OC
 #include <linux/live_oc.h>
 #endif
 
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 #ifdef CONFIG_SMP
 struct lpj_info {
         unsigned long   ref;
@@ -245,13 +242,10 @@ static int omap_target(struct cpufreq_policy *policy,
         unsigned int i;
         int ret = 0;
 
-<<<<<<< HEAD
 #ifdef CONFIG_LIVE_OC
 mutex_lock(&omap_cpufreq_lock);
 #endif
 
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
         if (!freq_table) {
                 dev_err(mpu_dev, "%s: cpu%d: no freq table!\n", __func__,
                                 policy->cpu);
@@ -266,13 +260,9 @@ mutex_lock(&omap_cpufreq_lock);
                 return ret;
         }
 
-<<<<<<< HEAD
         #ifndef CONFIG_LIVE_OC
         mutex_lock(&omap_cpufreq_lock);
         #endif
-=======
-        mutex_lock(&omap_cpufreq_lock);
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
         current_target_freq = freq_table[i].frequency;
 
@@ -493,13 +483,8 @@ static int __cpuinit omap_cpu_init(struct cpufreq_policy *policy)
 
         cpufreq_frequency_table_get_attr(freq_table, policy->cpu);
 
-<<<<<<< HEAD
         policy->min = 300000;
         policy->max = 1008000;
-=======
-        policy->min = 200000;
-        policy->max = 1200000;
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
         policy->cur = omap_getspeed(policy->cpu);
 
         for (i = 0; freq_table[i].frequency != CPUFREQ_TABLE_END; i++)
@@ -521,7 +506,6 @@ static int __cpuinit omap_cpu_init(struct cpufreq_policy *policy)
         /* FIXME: what's the actual transition time? */
         policy->cpuinfo.transition_latency = 300 * 1000;
 
-<<<<<<< HEAD
 #ifdef CONFIG_LIVE_OC
 liveoc_register_maxthermal(&max_thermal);
 liveoc_register_maxfreq(&max_freq);
@@ -529,8 +513,6 @@ liveoc_register_freqtable(freq_table);
 liveoc_register_freqmutex(&omap_cpufreq_lock);
 #endif
 
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
         return 0;
 
 fail_table:

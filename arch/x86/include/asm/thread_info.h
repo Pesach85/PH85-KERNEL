@@ -29,10 +29,7 @@ struct thread_info {
 	__u32			flags;		/* low level flags */
 	__u32			status;		/* thread synchronous flags */
 	__u32			cpu;		/* current CPU */
-<<<<<<< HEAD
 #define HAVE_THREAD_INFO_CPU   1
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	int			preempt_count;	/* 0 => preemptable,
 						   <0 => BUG */
 	mm_segment_t		addr_limit;

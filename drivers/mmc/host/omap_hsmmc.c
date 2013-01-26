@@ -1986,11 +1986,7 @@ static void omap_hsmmc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 	u32 con;
 	int do_send_init_stream = 0;
 
-<<<<<<< HEAD
 	pm_runtime_get_sync(host->dev);
-=======
-	mmc_claim_host(host->mmc);
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 	if (ios->power_mode != host->power_mode) {
 		switch (ios->power_mode) {
@@ -2091,11 +2087,7 @@ static void omap_hsmmc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 	else
 		OMAP_HSMMC_WRITE(host->base, CON, con & ~OD);
 
-<<<<<<< HEAD
 	pm_runtime_put_sync(host->dev);
-=======
-	mmc_release_host(host->mmc);
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 }
 
 static int omap_hsmmc_get_cd(struct mmc_host *mmc)

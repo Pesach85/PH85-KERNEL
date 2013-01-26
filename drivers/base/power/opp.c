@@ -109,14 +109,10 @@ static DEFINE_MUTEX(dev_opp_list_lock);
  * is a RCU protected pointer. This means that device_opp is valid as long
  * as we are under RCU lock.
  */
-<<<<<<< HEAD
 #ifndef CONFIG_LIVE_OC
 static
 #endif
 struct device_opp *find_device_opp(struct device *dev)
-=======
-static struct device_opp *find_device_opp(struct device *dev)
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 {
 	struct device_opp *tmp_dev_opp, *dev_opp = ERR_PTR(-ENODEV);
 
@@ -134,12 +130,9 @@ static struct device_opp *find_device_opp(struct device *dev)
 
 	return dev_opp;
 }
-<<<<<<< HEAD
 #ifdef CONFIG_LIVE_OC
 EXPORT_SYMBOL(find_device_opp);
 #endif
-=======
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 /**
  * opp_get_voltage() - Gets the voltage corresponding to an available opp

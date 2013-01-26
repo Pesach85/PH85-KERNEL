@@ -1,5 +1,4 @@
 /* drivers/misc/fsync_control.c
-<<<<<<< HEAD
  *
  * Copyright 2012  Ezekeel
  *
@@ -7,15 +6,6 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-=======
-*
-* Copyright 2012 Ezekeel
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License version 2 as
-* published by the Free Software Foundation.
-*/
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
 #include <linux/init.h>
 #include <linux/device.h>
@@ -40,7 +30,6 @@ static ssize_t fsynccontrol_status_write(struct device * dev, struct device_attr
 {
     unsigned int data;
 
-<<<<<<< HEAD
     if(sscanf(buf, "%u\n", &data) == 1) 
 	{
 	    if (data == 1) 
@@ -65,32 +54,6 @@ static ssize_t fsynccontrol_status_write(struct device * dev, struct device_attr
 	{
 	    pr_info("%s: invalid input\n", __FUNCTION__);
 	}
-=======
-    if(sscanf(buf, "%u\n", &data) == 1)
-{
-if (data == 1)
-{
-pr_info("%s: FSYNCCONTROL fsync enabled\n", __FUNCTION__);
-
-fsync_enabled = true;
-
-}
-else if (data == 0)
-{
-pr_info("%s: FSYNCCONTROL fsync disabled\n", __FUNCTION__);
-
-fsync_enabled = false;
-}
-else
-{
-pr_info("%s: invalid input range %u\n", __FUNCTION__, data);
-}
-}
-    else
-{
-pr_info("%s: invalid input\n", __FUNCTION__);
-}
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
     return size;
 }
@@ -103,7 +66,6 @@ static ssize_t fsynccontrol_version(struct device * dev, struct device_attribute
 static DEVICE_ATTR(fsync_enabled, S_IRUGO | S_IWUGO, fsynccontrol_status_read, fsynccontrol_status_write);
 static DEVICE_ATTR(version, S_IRUGO , fsynccontrol_version, NULL);
 
-<<<<<<< HEAD
 static struct attribute *fsynccontrol_attributes[] = 
     {
 	&dev_attr_fsync_enabled.attr,
@@ -120,24 +82,6 @@ static struct miscdevice fsynccontrol_device =
     {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "fsynccontrol",
-=======
-static struct attribute *fsynccontrol_attributes[] =
-    {
-&dev_attr_fsync_enabled.attr,
-&dev_attr_version.attr,
-NULL
-    };
-
-static struct attribute_group fsynccontrol_group =
-    {
-.attrs = fsynccontrol_attributes,
-    };
-
-static struct miscdevice fsynccontrol_device =
-    {
-.minor = MISC_DYNAMIC_MINOR,
-.name = "fsynccontrol",
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
     };
 
 static int __init fsynccontrol_init(void)
@@ -148,7 +92,6 @@ static int __init fsynccontrol_init(void)
 
     ret = misc_register(&fsynccontrol_device);
 
-<<<<<<< HEAD
     if (ret) 
 	{
 	    pr_err("%s misc_register(%s) fail\n", __FUNCTION__, fsynccontrol_device.name);
@@ -160,19 +103,6 @@ static int __init fsynccontrol_init(void)
 	    pr_err("%s sysfs_create_group fail\n", __FUNCTION__);
 	    pr_err("Failed to create sysfs group for device (%s)!\n", fsynccontrol_device.name);
 	}
-=======
-    if (ret)
-{
-pr_err("%s misc_register(%s) fail\n", __FUNCTION__, fsynccontrol_device.name);
-return 1;
-}
-
-    if (sysfs_create_group(&fsynccontrol_device.this_device->kobj, &fsynccontrol_group) < 0)
-{
-pr_err("%s sysfs_create_group fail\n", __FUNCTION__);
-pr_err("Failed to create sysfs group for device (%s)!\n", fsynccontrol_device.name);
-}
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 
     return 0;
 }

@@ -450,15 +450,10 @@ ext4_xattr_set_acl(struct dentry *dentry, const char *name, const void *value,
 
 retry:
 	handle = ext4_journal_start(inode, EXT4_DATA_TRANS_BLOCKS(inode->i_sb));
-<<<<<<< HEAD
 	if (IS_ERR(handle)) {
         error = PTR_ERR(handle);
         goto release_and_out;
         }
-=======
-	if (IS_ERR(handle))
-		return PTR_ERR(handle);
->>>>>>> 2f223424b581331b08fb227605637ae3e2bd7366
 	error = ext4_set_acl(handle, inode, type, acl);
 	ext4_journal_stop(handle);
 	if (error == -ENOSPC && ext4_should_retry_alloc(inode->i_sb, &retries))
