@@ -118,7 +118,6 @@ struct powerdomain_time_stats {
  * @voltdm: voltagedomain containing this powerdomain
  * @omap_chip: represents the OMAP chip types containing this pwrdm
  * @prcm_offs: the address offset from CM_BASE/PRM_BASE
- * @context_offs: the address offset for the CONTEXT register
  * @prcm_partition: (OMAP4 only) the PRCM partition ID containing @prcm_offs
  * @pwrsts: Possible powerdomain power states
  * @pwrsts_logic_ret: Possible logic power states when pwrdm in RETENTION
@@ -146,7 +145,6 @@ struct powerdomain {
 	} voltdm;
 	const struct omap_chip_id omap_chip;
 	const s16 prcm_offs;
-	const s16 context_offs;
 	const u8 pwrsts;
 	const u8 pwrsts_logic_ret;
 	const u8 flags;

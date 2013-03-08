@@ -602,22 +602,16 @@ config FSYNC_CONTROL
         help
           Say Y here to enable FSync Control
 
-config SOUND_CONTROL
-        bool "Enable support for Sound Control"
-        default y
-        help
-          Enable support for Sound Control
-
-config LIVE_OC
-        bool "Support For Live OC"
-        default y
-        help
-          Support For Live OC
-
 config CUSTOM_VOLTAGE
 	bool "Support for Custom Voltage"
 	default y
 	help
 	  Say Y here to enable Custom Voltage
+
+config LIVE_OC
+        bool "Support for Live OC"
+        default y
+        help
+          Say Y here to enable Live OC
 
 endif # MISC_DEVICES

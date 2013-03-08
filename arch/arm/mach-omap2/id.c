@@ -239,9 +239,7 @@ static void __init omap4_check_features(void)
 	switch (si_type) {
 	case OMAP4_SILICON_TYPE_PERFORMANCE:
 		/* High performance device */
-                if (cpu_is_omap443x())
-			omap4_features |= OMAP4_HAS_MPU_1GHZ;
-                else if (cpu_is_omap443x())
+		if (cpu_is_omap443x())
 			omap4_features |= OMAP4_HAS_MPU_1_2GHZ;
 		else if (cpu_is_omap446x() || cpu_is_omap447x()) {
 			omap4_features |= OMAP4_HAS_MPU_1_5GHZ;
@@ -250,8 +248,13 @@ static void __init omap4_check_features(void)
 		/* Fall through to Standard device features */
 	case OMAP4_SILICON_TYPE_STANDARD:
 	default:
-		/* Standard device */              
-		if (cpu_is_omap447x()) {
+		/* Standard device */
+		if (cpu_is_omap443x())
+			omap4_features |= OMAP4_HAS_MPU_1GHZ;
+		else if (cpu_is_omap446x()) {
+			omap4_features |= OMAP4_HAS_MPU_1_2GHZ;
+			omap4_features |= OMAP4_HAS_IVA_430MHZ;
+		} else if (cpu_is_omap447x()) {
 			omap4_features |= OMAP4_HAS_MPU_1_3GHZ;
 			omap4_features |= OMAP4_HAS_IVA_430MHZ;
 		}

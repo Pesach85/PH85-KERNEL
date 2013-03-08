@@ -20,7 +20,6 @@
 #define OMAP4_DPLL_MPU_TRIMMED_VAL_2P4	(0x1 << 18)
 #define OMAP4_DPLL_MPU_TRIMMED_VAL_3P0	(0x3 << 18)
 #define OMAP4_DPLL_MPU_TRIMMED_MASK	(BIT(19) | BIT(18))
-
 /*
  * Trim value has to be written to CONTROL_EFUSE_2 according to
  * OMAP4430 errata i684 (version B)
@@ -30,7 +29,7 @@
 #define OMAP4_PROD_ID_I684_MASK		0x000C0000
 
 static bool bgap_trim_sw_overide;
-static bool dpll_trim_override;
+static bool dpll_trim_override = true;
 static bool ddr_io_trim_override;
 
 /**
@@ -71,6 +70,7 @@ int omap4_ldo_trim_configure(void)
 			OMAP4_CTRL_MODULE_PAD_CORE_CONTROL_EFUSE_1);
 	}
 
+
 	/* DDR I/O Trim override as per erratum i684 */
 	if (ddr_io_trim_override) {
 		omap4_ctrl_pad_writel(OMAP4_LPDDR2_I684_FIX_VALUE,
@@ -78,7 +78,7 @@ int omap4_ldo_trim_configure(void)
 	}
 
 	/* Required for DPLL_MPU to lock at 2.4 GHz */
-	// if (dpll_trim_override)
+	if (dpll_trim_override)
 		omap_ctrl_writel(0x29, OMAP4_CTRL_MODULE_CORE_DPLL_NWELL_TRIM_0);
 
 	return 0;
@@ -155,7 +155,7 @@ static __init int omap4_ldo_trim_init(void)
 	 */
 #ifdef CONFIG_MACH_LGE_IFF
 	/* If not already trimmed, use s/w override */
-	if (system_rev > 1 && cpu_is_omap446x())
+	if (system_rev > 2 && cpu_is_omap446x())
 		omap4460_mpu_dpll_trim_override();
 #else
 	/* If not already trimmed, use s/w override */

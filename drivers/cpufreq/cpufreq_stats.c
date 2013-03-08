@@ -421,6 +421,7 @@ static void __exit cpufreq_stats_exit(void)
 		cpufreq_stats_free_sysfs(cpu);
 	}
 }
+
 #ifdef CONFIG_LIVE_OC
 void cpufreq_stats_reset(void)
 {

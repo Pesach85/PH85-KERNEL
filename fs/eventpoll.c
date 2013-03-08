@@ -1067,8 +1067,6 @@ static int ep_modify(struct eventpoll *ep, struct epitem *epi, struct epoll_even
    */
   smp_mb();
   /*
-
-	/*
 	 * Get current event bits. We can safely use the file* here because
 	 * its usage count has been increased by the caller of this function.
 	 */
