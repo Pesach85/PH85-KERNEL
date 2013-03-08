@@ -1,4 +1,9 @@
-	Linux kernel release 3.x <http://kernel.org/>
+  3.0.21 with more clocks step tweaks, voltage control, live_OC (thanks ezekiel), 
+  fastcharge thanks to iBluemind and many more.
+  You can find the defconfig i used in /arch/arm/configs/.
+ 
+  
+  Linux kernel release 3.x <http://kernel.org/>
 
 These are the release notes for Linux version 3.  Read them carefully,
 as they tell you what this is all about, explain how to install the
